@@ -287,7 +287,7 @@ pub extern "C" fn init() {
     );
     runtime::put_key(RECEIPT_NAME, storage::new_uref(receipt_name).into());
     runtime::put_key(
-        &format!("{}{}", CEP78_PREFIX, collection_name),
+        &format!("{CEP78_PREFIX}{collection_name}"),
         storage::new_uref(package_hash).into(),
     );
     runtime::put_key(
@@ -1303,7 +1303,7 @@ pub extern "C" fn migrate() {
         NFTCoreError::InvalidReceiptName,
     );
 
-    let new_receipt_string_representation = format!("{}{}", CEP78_PREFIX, collection_name);
+    let new_receipt_string_representation = format!("{CEP78_PREFIX}{collection_name}");
     runtime::put_key(
         &new_receipt_string_representation,
         storage::new_uref(new_contract_package_hash_representation.to_formatted_string()).into(),
@@ -1370,7 +1370,7 @@ pub extern "C" fn updated_receipts() {
                 continue;
             }
             let page_uref = utils::get_uref(
-                &format!("{}{}", PAGE_DICTIONARY_PREFIX, page_table_entry),
+                &format!("{PAGE_DICTIONARY_PREFIX}{page_table_entry}"),
                 NFTCoreError::MissingPageUref,
                 NFTCoreError::InvalidPageUref,
             );
@@ -1428,7 +1428,7 @@ pub extern "C" fn register_owner() {
             NFTCoreError::InvalidCollectionName,
         );
         let package_uref = storage::new_uref(utils::get_stored_value_with_user_errors::<String>(
-            &format!("{}{}", CEP78_PREFIX, collection_name),
+            &format!("{CEP78_PREFIX}{collection_name}"),
             NFTCoreError::MissingCep78PackageHash,
             NFTCoreError::InvalidCep78InvalidHash,
         ));
@@ -1894,7 +1894,7 @@ fn install_contract() {
     // of a read only reference to the NFTs owned by the calling `Account` or `Contract`
     // This allows for users to look up a set of named keys and correctly identify
     // the contract package from which the NFTs were obtained.
-    let receipt_name = format!("{}{}", CEP78_PREFIX, collection_name);
+    let receipt_name = format!("{CEP78_PREFIX}{collection_name}");
 
     // Call contract to initialize it
     runtime::call_contract::<()>(
