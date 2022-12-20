@@ -227,7 +227,7 @@ pub(crate) fn get_token_page_by_id(
     get_dictionary_value_from_key(
         builder,
         nft_contract_key,
-        &format!("{PAGE_DICTIONARY_PREFIX}{page_number}"),
+        &format!("{PAGE_DICTIONARY_PREFIX}_{page_number}"),
         &token_page_item_key,
     )
 }
