@@ -258,5 +258,5 @@ pub(crate) fn get_stored_value_from_global_state<T: CLTyped + FromBytes>(
 }
 
 pub(crate) fn get_receipt_name(nft_receipt: String, page_table_entry: u64) -> String {
-    format!("{nft_receipt}-m-{PAGE_SIZE}-p-{page_table_entry}")
+    format!("{nft_receipt}_m_{PAGE_SIZE}_p_{page_table_entry}")
 }
