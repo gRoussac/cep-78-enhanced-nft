@@ -307,7 +307,7 @@ pub extern "C" fn init() {
     runtime::put_key(BURN_MODE, storage::new_uref(burn_mode as u8).into());
     runtime::put_key(
         REPORTING_MODE,
-        storage::new_uref(reporting_mode.clone() as u8).into(),
+        storage::new_uref(reporting_mode as u8).into(),
     );
 
     // Initialize contract with variables which must be present but maybe set to
@@ -1886,11 +1886,11 @@ fn install_contract() {
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
-        &format!("{}{}", CONTRACT_NAME_PREFIX, collection_name),
+        &format!("{CONTRACT_NAME_PREFIX}{collection_name}"),
         contract_hash.into(),
     );
     runtime::put_key(
-        &format!("{}{}", CONTRACT_VERSION_PREFIX, collection_name),
+        &format!("{CONTRACT_VERSION_PREFIX}{collection_name}"),
         storage::new_uref(contract_version).into(),
     );
 
@@ -1967,11 +1967,11 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
-        &format!("{}{}", CONTRACT_NAME_PREFIX, collection_name),
+        &format!("{CONTRACT_NAME_PREFIX}{collection_name}"),
         contract_hash.into(),
     );
     runtime::put_key(
-        &format!("{}{}", CONTRACT_VERSION_PREFIX, collection_name),
+        &format!("{CONTRACT_VERSION_PREFIX}{collection_name}"),
         storage::new_uref(contract_version).into(),
     );
 
