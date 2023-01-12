@@ -1886,11 +1886,11 @@ fn install_contract() {
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
-        &format!("{CONTRACT_NAME_PREFIX}{collection_name}"),
+        &format!("{CONTRACT_NAME_PREFIX}_{collection_name}"),
         contract_hash.into(),
     );
     runtime::put_key(
-        &format!("{CONTRACT_VERSION_PREFIX}{collection_name}"),
+        &format!("{CONTRACT_VERSION_PREFIX}_{collection_name}"),
         storage::new_uref(contract_version).into(),
     );
 
@@ -1967,11 +1967,11 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
-        &format!("{CONTRACT_NAME_PREFIX}{collection_name}"),
+        &format!("{CONTRACT_NAME_PREFIX}_{collection_name}"),
         contract_hash.into(),
     );
     runtime::put_key(
-        &format!("{CONTRACT_VERSION_PREFIX}{collection_name}"),
+        &format!("{CONTRACT_VERSION_PREFIX}_{collection_name}"),
         storage::new_uref(contract_version).into(),
     );
 
