@@ -16,7 +16,7 @@ use crate::utility::{
         ENTRY_POINT_APPROVE, ENTRY_POINT_MINT, ENTRY_POINT_REGISTER_OWNER, ENTRY_POINT_TRANSFER,
         MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
         NFT_TEST_SYMBOL, OPERATOR, PAGE_TABLE, TEST_PRETTY_721_META_DATA, TOKEN_OWNERS,
-        TRANSFER_SESSION_WASM,
+        TRANSFER_FROM_SESSION_WASM, TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
@@ -604,7 +604,7 @@ fn should_dissallow_same_operator_to_tranfer_token_twice() {
 
     let transfer_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
-        TRANSFER_SESSION_WASM,
+        TRANSFER_FROM_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_TOKEN_ID => 0u64,
@@ -619,7 +619,7 @@ fn should_dissallow_same_operator_to_tranfer_token_twice() {
     let (_, to_other_account_public_key) = support::create_dummy_key_pair(ACCOUNT_USER_3);
     let transfer_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
-        TRANSFER_SESSION_WASM,
+        TRANSFER_FROM_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_TOKEN_ID => 0u64,
@@ -1064,6 +1064,8 @@ fn transfer_should_correctly_track_page_table_entries() {
     assert!(account_user_1_page_table[0])
 }
 
+// TODO fn transfer_from_should_correctly_track_page_table_entries
+
 #[test]
 fn should_prevent_transfer_to_unregistered_owner() {
     let mut builder = InMemoryWasmTestBuilder::default();
@@ -1239,3 +1241,5 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
     let expected_receiver_balance = 1u64;
     assert_eq!(actual_receiver_balance, expected_receiver_balance);
 }
+
+// TODO fn should_transfer_from_token_from_sender_to_receiver_with_transfer_only_reporting

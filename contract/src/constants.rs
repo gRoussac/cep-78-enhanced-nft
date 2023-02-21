@@ -80,6 +80,7 @@ pub const ENTRY_POINT_SET_VARIABLES: &str = "set_variables";
 pub const ENTRY_POINT_MINT: &str = "mint";
 pub const ENTRY_POINT_BURN: &str = "burn";
 pub const ENTRY_POINT_TRANSFER: &str = "transfer";
+pub const ENTRY_POINT_TRANSFER_FROM: &str = "transfer_from";
 pub const ENTRY_POINT_APPROVE: &str = "approve";
 pub const ENTRY_POINT_BALANCE_OF: &str = "balance_of";
 pub const ENTRY_POINT_OWNER_OF: &str = "owner_of";

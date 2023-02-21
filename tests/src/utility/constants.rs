@@ -2,6 +2,7 @@ pub(crate) const NFT_CONTRACT_WASM: &str = "contract.wasm";
 pub(crate) const MINT_SESSION_WASM: &str = "mint_call.wasm";
 pub(crate) const MINTING_CONTRACT_WASM: &str = "minting_contract.wasm";
 pub(crate) const TRANSFER_SESSION_WASM: &str = "transfer_call.wasm";
+pub(crate) const TRANSFER_FROM_SESSION_WASM: &str = "transfer_from_call.wasm";
 pub(crate) const BALANCE_OF_SESSION_WASM: &str = "balance_of_call.wasm";
 pub(crate) const OWNER_OF_SESSION_WASM: &str = "owner_of_call.wasm";
 pub(crate) const GET_APPROVED_WASM: &str = "get_approved_call.wasm";

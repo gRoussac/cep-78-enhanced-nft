@@ -21,7 +21,10 @@ use alloc::{
     vec::Vec,
 };
 
-use constants::{ARG_ADDITIONAL_REQUIRED_METADATA, ARG_OPTIONAL_METADATA, NFT_METADATA_KINDS};
+use constants::{
+    ARG_ADDITIONAL_REQUIRED_METADATA, ARG_OPTIONAL_METADATA, ENTRY_POINT_TRANSFER_FROM,
+    NFT_METADATA_KINDS,
+};
 use core::convert::TryInto;
 use modalities::Requirement;
 
@@ -851,9 +854,181 @@ pub extern "C" fn set_approval_for_all() {
 }
 
 // Transfers token from token_owner to specified account. Transfer will go through if caller is
-// owner or an approved operator. Transfer will fail if OwnershipMode is Minter or Assigned.
+// owner. Transfer will fail if OwnershipMode is Minter or Assigned.
 #[no_mangle]
 pub extern "C" fn transfer() {
+    // If we are in minter or assigned mode we are not allowed to transfer ownership of token, hence
+    // we revert.
+    if let OwnershipMode::Minter | OwnershipMode::Assigned =
+        utils::get_ownership_mode().unwrap_or_revert()
+    {
+        runtime::revert(NFTCoreError::InvalidOwnershipMode)
+    }
+
+    let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
+        IDENTIFIER_MODE,
+        NFTCoreError::MissingIdentifierMode,
+        NFTCoreError::InvalidIdentifierMode,
+    )
+    .try_into()
+    .unwrap_or_revert();
+
+    let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
+
+    // We assume we cannot transfer burnt tokens
+    if utils::is_token_burned(&token_identifier) {
+        runtime::revert(NFTCoreError::PreviouslyBurntToken)
+    }
+
+    let token_owner_key = match utils::get_dictionary_value_from_key::<Key>(
+        TOKEN_OWNERS,
+        &token_identifier.get_dictionary_item_key(),
+    ) {
+        Some(token_owner) => token_owner,
+        None => runtime::revert(NFTCoreError::InvalidTokenIdentifier),
+    };
+
+    let source_owner_key = utils::get_named_arg_with_user_errors::<Key>(
+        ARG_SOURCE_KEY,
+        NFTCoreError::MissingAccountHash,
+        NFTCoreError::InvalidAccountHash,
+    )
+    .unwrap_or_revert();
+
+    if source_owner_key != token_owner_key {
+        runtime::revert(NFTCoreError::InvalidAccount);
+    }
+
+    let caller = utils::get_verified_caller().unwrap_or_revert();
+
+    // Check if caller is approved to execute transfer
+    let is_approved = match utils::get_dictionary_value_from_key::<Option<Key>>(
+        OPERATOR,
+        &token_identifier.get_dictionary_item_key(),
+    ) {
+        Some(Some(approved_key)) => approved_key == caller,
+        Some(None) | None => false,
+    };
+
+    // Revert if caller is not owner and not approved.
+    if caller != token_owner_key && !is_approved {
+        runtime::revert(NFTCoreError::InvalidTokenOwner);
+    }
+
+    let target_owner_key: Key = utils::get_named_arg_with_user_errors(
+        ARG_TARGET_KEY,
+        NFTCoreError::MissingAccountHash,
+        NFTCoreError::InvalidAccountHash,
+    )
+    .unwrap_or_revert();
+
+    if NFTIdentifierMode::Hash == identifier_mode {
+        if utils::should_migrate_token_hashes(source_owner_key) {
+            utils::migrate_token_hashes(source_owner_key)
+        }
+
+        if utils::should_migrate_token_hashes(target_owner_key) {
+            utils::migrate_token_hashes(target_owner_key)
+        }
+    }
+
+    let source_owner_item_key = utils::get_owned_tokens_dictionary_item_key(source_owner_key);
+    let target_owner_item_key = utils::get_owned_tokens_dictionary_item_key(target_owner_key);
+
+    // Updated token_owners dictionary. Revert if token_owner not found.
+    match utils::get_dictionary_value_from_key::<Key>(
+        TOKEN_OWNERS,
+        &token_identifier.get_dictionary_item_key(),
+    ) {
+        Some(token_actual_owner) => {
+            if token_actual_owner != source_owner_key {
+                runtime::revert(NFTCoreError::InvalidTokenOwner)
+            }
+            utils::upsert_dictionary_value_from_key(
+                TOKEN_OWNERS,
+                &token_identifier.get_dictionary_item_key(),
+                target_owner_key,
+            );
+        }
+        None => runtime::revert(NFTCoreError::InvalidTokenIdentifier),
+    }
+
+    // Update the from_account balance
+    let updated_from_account_balance =
+        match utils::get_dictionary_value_from_key::<u64>(TOKEN_COUNTS, &source_owner_item_key) {
+            Some(balance) => {
+                if balance > 0u64 {
+                    balance - 1u64
+                } else {
+                    // This should never happen...
+                    runtime::revert(NFTCoreError::FatalTokenIdDuplication);
+                }
+            }
+            None => {
+                // This should never happen...
+                runtime::revert(NFTCoreError::FatalTokenIdDuplication);
+            }
+        };
+    utils::upsert_dictionary_value_from_key(
+        TOKEN_COUNTS,
+        &source_owner_item_key,
+        updated_from_account_balance,
+    );
+
+    // Update the to_account balance
+    let updated_to_account_balance =
+        match utils::get_dictionary_value_from_key::<u64>(TOKEN_COUNTS, &target_owner_item_key) {
+            Some(balance) => balance + 1u64,
+            None => 1u64,
+        };
+    utils::upsert_dictionary_value_from_key(
+        TOKEN_COUNTS,
+        &target_owner_item_key,
+        updated_to_account_balance,
+    );
+
+    let operator_uref = utils::get_uref(
+        OPERATOR,
+        NFTCoreError::MissingStorageUref,
+        NFTCoreError::InvalidStorageUref,
+    );
+
+    storage::dictionary_put(
+        operator_uref,
+        &token_identifier.get_dictionary_item_key(),
+        Option::<Key>::None,
+    );
+
+    let reporting_mode = utils::get_reporting_mode();
+
+    if let OwnerReverseLookupMode::Complete | OwnerReverseLookupMode::TransfersOnly = reporting_mode
+    {
+        // Update to_account owned_tokens. Revert if owned_tokens list is not found
+        let tokens_count = utils::get_token_index(&token_identifier);
+        if OwnerReverseLookupMode::TransfersOnly == reporting_mode {
+            utils::add_page_entry_and_page_record(tokens_count, &source_owner_item_key, false);
+        }
+
+        let (page_table_entry, page_uref) = utils::update_page_entry_and_page_record(
+            tokens_count,
+            &source_owner_item_key,
+            &target_owner_item_key,
+        );
+
+        let owned_tokens_actual_key = Key::dictionary(page_uref, source_owner_item_key.as_bytes());
+
+        let receipt_string = utils::get_receipt_name(page_table_entry);
+
+        let receipt = CLValue::from_t((receipt_string, owned_tokens_actual_key))
+            .unwrap_or_revert_with(NFTCoreError::FailedToConvertToCLValue);
+        runtime::ret(receipt)
+    }
+}
+
+// Transfers token from token_owner to specified account. Transfer will go through if caller is
+// an approved operator. Transfer will fail if OwnershipMode is Minter or Assigned.
+#[no_mangle]
+pub extern "C" fn transfer_from() {
     // If we are in minter or assigned mode we are not allowed to transfer ownership of token, hence
     // we revert.
     if let OwnershipMode::Minter | OwnershipMode::Assigned =
@@ -1560,12 +1735,27 @@ fn generate_entry_points() -> EntryPoints {
         EntryPointType::Contract,
     );
 
-    // This entrypoint transfers ownership of token from one account to another.
+    // This entrypoint transfers ownership of token from one owner account to another.
     // It looks up the owner of the supplied token_id arg. Revert if token is already burnt,
-    // token_id is invalid, or if caller is not owner and not approved operator.
+    // token_id is invalid, or if caller is not owner.
     // If token id is invalid it reverts with error InvalidTokenID.
     let transfer = EntryPoint::new(
         ENTRY_POINT_TRANSFER,
+        vec![
+            Parameter::new(ARG_SOURCE_KEY, CLType::Key),
+            Parameter::new(ARG_TARGET_KEY, CLType::Key),
+        ],
+        CLType::Tuple2([Box::new(CLType::String), Box::new(CLType::Key)]),
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+
+    // This entrypoint transfers ownership of token from one account to another.
+    // It looks up the owner of the supplied token_id arg. Revert if token is already burnt,
+    // token_id is invalid, or if caller is not an approved operator.
+    // If token id is invalid it reverts with error InvalidTokenID.
+    let transfer_from = EntryPoint::new(
+        ENTRY_POINT_TRANSFER_FROM,
         vec![
             Parameter::new(ARG_SOURCE_KEY, CLType::Key),
             Parameter::new(ARG_TARGET_KEY, CLType::Key),
@@ -1695,6 +1885,7 @@ fn generate_entry_points() -> EntryPoints {
     entry_points.add_entry_point(mint);
     entry_points.add_entry_point(burn);
     entry_points.add_entry_point(transfer);
+    entry_points.add_entry_point(transfer_from);
     entry_points.add_entry_point(approve);
     entry_points.add_entry_point(owner_of);
     entry_points.add_entry_point(balance_of);
