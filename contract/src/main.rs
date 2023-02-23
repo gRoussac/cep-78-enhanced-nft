@@ -854,7 +854,7 @@ pub extern "C" fn set_approval_for_all() {
 }
 
 // Transfers token from token_owner to specified account. Transfer will go through if caller is
-// owner. Transfer will fail if OwnershipMode is Minter or Assigned.
+// owner or an approved operator. Transfer will fail if OwnershipMode is Minter or Assigned.
 #[no_mangle]
 pub extern "C" fn transfer() {
     // If we are in minter or assigned mode we are not allowed to transfer ownership of token, hence
@@ -1735,9 +1735,9 @@ fn generate_entry_points() -> EntryPoints {
         EntryPointType::Contract,
     );
 
-    // This entrypoint transfers ownership of token from one owner account to another.
+    // This entrypoint transfers ownership of token from one account to another.
     // It looks up the owner of the supplied token_id arg. Revert if token is already burnt,
-    // token_id is invalid, or if caller is not owner.
+    // token_id is invalid, or if caller is not owner and not approved operator.
     // If token id is invalid it reverts with error InvalidTokenID.
     let transfer = EntryPoint::new(
         ENTRY_POINT_TRANSFER,
