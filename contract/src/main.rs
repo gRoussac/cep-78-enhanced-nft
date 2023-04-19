@@ -22,14 +22,15 @@ use alloc::{
     vec::Vec,
 };
 use constants::{ARG_ADDITIONAL_REQUIRED_METADATA, ARG_OPTIONAL_METADATA, NFT_METADATA_KINDS};
+
 use modalities::Requirement;
 
 use core::convert::{TryFrom, TryInto};
 
 use casper_types::{
-    contracts::NamedKeys, runtime_args, CLType, CLValue, ContractHash, ContractPackageHash,
-    EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key, KeyTag, Parameter, RuntimeArgs,
-    Tagged,
+    account::AccountHash, contracts::NamedKeys, runtime_args, CLType, CLValue, ContractHash,
+    ContractPackageHash, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key, KeyTag,
+    Parameter, RuntimeArgs, Tagged,
 };
 
 use casper_contract::{
@@ -41,16 +42,16 @@ use casper_contract::{
 };
 
 use constants::{
-    ACCESS_KEY_NAME_1_0_0, ALLOW_MINTING, APPROVED, ARG_ACCESS_KEY_NAME_1_0_0, ARG_ALLOW_MINTING,
-    ARG_APPROVE_ALL, ARG_BURN_MODE, ARG_COLLECTION_NAME, ARG_COLLECTION_SYMBOL,
-    ARG_CONTRACT_WHITELIST, ARG_EVENTS_MODE, ARG_HASH_KEY_NAME_1_0_0, ARG_HOLDER_MODE,
-    ARG_IDENTIFIER_MODE, ARG_JSON_SCHEMA, ARG_METADATA_MUTABILITY, ARG_MINTING_MODE,
-    ARG_NAMED_KEY_CONVENTION, ARG_NFT_KIND, ARG_NFT_METADATA_KIND, ARG_NFT_PACKAGE_KEY,
-    ARG_OPERATOR, ARG_OWNERSHIP_MODE, ARG_OWNER_LOOKUP_MODE, ARG_RECEIPT_NAME, ARG_SOURCE_KEY,
-    ARG_SPENDER, ARG_TARGET_KEY, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, ARG_TOTAL_TOKEN_SUPPLY,
-    ARG_WHITELIST_MODE, BURNT_TOKENS, BURN_MODE, COLLECTION_NAME, COLLECTION_SYMBOL,
-    CONTRACT_WHITELIST, ENTRY_POINT_APPROVE, ENTRY_POINT_BALANCE_OF, ENTRY_POINT_BURN,
-    ENTRY_POINT_GET_APPROVED, ENTRY_POINT_INIT, ENTRY_POINT_IS_APPROVED_FOR_ALL,
+    ACCESS_KEY_NAME_1_0_0, ACCOUNT_WHITELIST, ALLOW_MINTING, APPROVED, ARG_ACCESS_KEY_NAME_1_0_0,
+    ARG_ACCOUNT_WHITELIST, ARG_ALLOW_MINTING, ARG_APPROVE_ALL, ARG_BURN_MODE, ARG_COLLECTION_NAME,
+    ARG_COLLECTION_SYMBOL, ARG_CONTRACT_WHITELIST, ARG_EVENTS_MODE, ARG_HASH_KEY_NAME_1_0_0,
+    ARG_HOLDER_MODE, ARG_IDENTIFIER_MODE, ARG_JSON_SCHEMA, ARG_METADATA_MUTABILITY,
+    ARG_MINTING_MODE, ARG_NAMED_KEY_CONVENTION, ARG_NFT_KIND, ARG_NFT_METADATA_KIND,
+    ARG_NFT_PACKAGE_KEY, ARG_OPERATOR, ARG_OWNERSHIP_MODE, ARG_OWNER_LOOKUP_MODE, ARG_RECEIPT_NAME,
+    ARG_SOURCE_KEY, ARG_SPENDER, ARG_TARGET_KEY, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER,
+    ARG_TOTAL_TOKEN_SUPPLY, ARG_WHITELIST_MODE, BURNT_TOKENS, BURN_MODE, COLLECTION_NAME,
+    COLLECTION_SYMBOL, CONTRACT_WHITELIST, ENTRY_POINT_APPROVE, ENTRY_POINT_BALANCE_OF,
+    ENTRY_POINT_BURN, ENTRY_POINT_GET_APPROVED, ENTRY_POINT_INIT, ENTRY_POINT_IS_APPROVED_FOR_ALL,
     ENTRY_POINT_METADATA, ENTRY_POINT_MIGRATE, ENTRY_POINT_MINT, ENTRY_POINT_OWNER_OF,
     ENTRY_POINT_REGISTER_OWNER, ENTRY_POINT_REVOKE, ENTRY_POINT_SET_APPROVALL_FOR_ALL,
     ENTRY_POINT_SET_TOKEN_METADATA, ENTRY_POINT_SET_VARIABLES, ENTRY_POINT_TRANSFER,
@@ -186,10 +187,32 @@ pub extern "C" fn init() {
     .unwrap_or_revert();
 
     if WhitelistMode::Locked == whitelist_mode
+        && NFTHolderMode::Contracts == holder_mode
         && contract_whitelist.is_empty()
-        && NFTHolderMode::Accounts != holder_mode
     {
         runtime::revert(NFTCoreError::EmptyContractWhitelist)
+    }
+
+    let account_whitelist = utils::get_named_arg_with_user_errors::<Vec<AccountHash>>(
+        ARG_ACCOUNT_WHITELIST,
+        NFTCoreError::MissingAccountsWhiteList,
+        NFTCoreError::InvalidAccountsWhitelist,
+    )
+    .unwrap_or_revert();
+
+    if WhitelistMode::Locked == whitelist_mode
+        && NFTHolderMode::Accounts == holder_mode
+        && account_whitelist.is_empty()
+    {
+        runtime::revert(NFTCoreError::EmptyAccountsWhitelist)
+    }
+
+    if WhitelistMode::Locked == whitelist_mode
+        && NFTHolderMode::Mixed == holder_mode
+        && contract_whitelist.is_empty()
+        && account_whitelist.is_empty()
+    {
+        runtime::revert(NFTCoreError::EmptyMixedWhitelist)
     }
 
     let receipt_name: String = utils::get_named_arg_with_user_errors(
@@ -334,6 +357,10 @@ pub extern "C" fn init() {
         CONTRACT_WHITELIST,
         storage::new_uref(contract_whitelist).into(),
     );
+    runtime::put_key(
+        ACCOUNT_WHITELIST,
+        storage::new_uref(account_whitelist).into(),
+    );
     runtime::put_key(RECEIPT_NAME, storage::new_uref(receipt_name).into());
     runtime::put_key(
         &format!("{PREFIX_CEP78}_{collection_name}"),
@@ -449,19 +476,20 @@ pub extern "C" fn set_variables() {
         storage::write(allow_minting_uref, allow_minting);
     }
 
+    let whitelist_mode: WhitelistMode = utils::get_stored_value_with_user_errors::<u8>(
+        WHITELIST_MODE,
+        NFTCoreError::MissingWhitelistMode,
+        NFTCoreError::InvalidWhitelistMode,
+    )
+    .try_into()
+    .unwrap_or_revert();
+
     if let Some(new_contract_whitelist) =
         utils::get_optional_named_arg_with_user_errors::<Vec<ContractHash>>(
             ARG_CONTRACT_WHITELIST,
             NFTCoreError::MissingContractWhiteList,
         )
     {
-        let whitelist_mode: WhitelistMode = utils::get_stored_value_with_user_errors::<u8>(
-            WHITELIST_MODE,
-            NFTCoreError::MissingWhitelistMode,
-            NFTCoreError::InvalidWhitelistMode,
-        )
-        .try_into()
-        .unwrap_or_revert();
         match whitelist_mode {
             WhitelistMode::Unlocked => {
                 let whitelist_uref = utils::get_uref(
@@ -470,6 +498,25 @@ pub extern "C" fn set_variables() {
                     NFTCoreError::InvalidWhitelistMode,
                 );
                 storage::write(whitelist_uref, new_contract_whitelist)
+            }
+            WhitelistMode::Locked => runtime::revert(NFTCoreError::InvalidWhitelistMode),
+        }
+    }
+
+    if let Some(new_acounts_whitelist) =
+        utils::get_optional_named_arg_with_user_errors::<Vec<ContractHash>>(
+            ARG_ACCOUNT_WHITELIST,
+            NFTCoreError::MissingContractWhiteList,
+        )
+    {
+        match whitelist_mode {
+            WhitelistMode::Unlocked => {
+                let whitelist_uref = utils::get_uref(
+                    ACCOUNT_WHITELIST,
+                    NFTCoreError::MissingContractWhiteList,
+                    NFTCoreError::InvalidWhitelistMode,
+                );
+                storage::write(whitelist_uref, new_acounts_whitelist)
             }
             WhitelistMode::Locked => runtime::revert(NFTCoreError::InvalidWhitelistMode),
         }
@@ -562,6 +609,30 @@ pub extern "C" fn mint() {
                 // Revert if private minting is required and caller is not installer.
                 if runtime::get_caller() != installer_account {
                     runtime::revert(NFTCoreError::InvalidMinter)
+                }
+            }
+            _ => runtime::revert(NFTCoreError::InvalidKey),
+        }
+    }
+
+    // Revert if minting is public and caller is not in the whitelist.
+    if let MintingMode::Public = minting_mode {
+        let caller = utils::get_verified_caller().unwrap_or_revert();
+        match caller.tag() {
+            // accounts whitelist does not affect contracts in Public minting mode, only for
+            // accounts if account_whitelist is not empty
+            KeyTag::Hash => {}
+            KeyTag::Account => {
+                let account_whitelist = utils::get_stored_value_with_user_errors::<Vec<AccountHash>>(
+                    ACCOUNT_WHITELIST,
+                    NFTCoreError::MissingWhitelistMode,
+                    NFTCoreError::InvalidWhitelistMode,
+                );
+                // Revert if the caller is not in the whitelist.
+                if !account_whitelist.is_empty()
+                    && !account_whitelist.contains(&runtime::get_caller())
+                {
+                    runtime::revert(NFTCoreError::UnlistedAccountHash)
                 }
             }
             _ => runtime::revert(NFTCoreError::InvalidKey),
@@ -1845,6 +1916,10 @@ fn generate_entry_points() -> EntryPoints {
                 ARG_CONTRACT_WHITELIST,
                 CLType::List(Box::new(CLType::ByteArray(32u32))),
             ),
+            Parameter::new(
+                ARG_ACCOUNT_WHITELIST,
+                CLType::List(Box::new(CLType::ByteArray(32u32))),
+            ),
             Parameter::new(ARG_JSON_SCHEMA, CLType::String),
             Parameter::new(ARG_RECEIPT_NAME, CLType::String),
             Parameter::new(ARG_IDENTIFIER_MODE, CLType::U8),
@@ -1874,6 +1949,10 @@ fn generate_entry_points() -> EntryPoints {
             Parameter::new(ARG_ALLOW_MINTING, CLType::Bool),
             Parameter::new(
                 ARG_CONTRACT_WHITELIST,
+                CLType::List(Box::new(CLType::ByteArray(32u32))),
+            ),
+            Parameter::new(
+                ARG_ACCOUNT_WHITELIST,
                 CLType::List(Box::new(CLType::ByteArray(32u32))),
             ),
         ],
@@ -2204,6 +2283,16 @@ fn install_contract() {
     )
     .unwrap_or_default();
 
+    // A whitelist of accounts hashes specifying which accounts can mint
+    // NFTs in the contract holder mode with restricted minting.
+    // This value can only be modified if the whitelist lock is
+    // set to be unlocked.
+    let account_white_list: Vec<AccountHash> = utils::get_optional_named_arg_with_user_errors(
+        ARG_ACCOUNT_WHITELIST,
+        NFTCoreError::InvalidAccountsWhitelist,
+    )
+    .unwrap_or_default();
+
     // Represents the schema for the metadata for a given NFT contract instance.
     // Refer to the `NFTMetadataKind` enum in src/utils for details.
     // This value cannot be changed after installation.
@@ -2344,6 +2433,7 @@ fn install_contract() {
             ARG_HOLDER_MODE => holder_mode,
             ARG_WHITELIST_MODE => whitelist_lock,
             ARG_CONTRACT_WHITELIST => contract_white_list,
+            ARG_ACCOUNT_WHITELIST => account_white_list,
             ARG_JSON_SCHEMA => json_schema,
             ARG_RECEIPT_NAME => receipt_name,
             ARG_NFT_METADATA_KIND => base_metadata_kind,

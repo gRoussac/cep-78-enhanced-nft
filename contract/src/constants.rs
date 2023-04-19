@@ -13,6 +13,8 @@ pub const ARG_BURN_MODE: &str = "burn_mode";
 pub const ARG_COLLECTION_NAME: &str = "collection_name";
 pub const ARG_COLLECTION_SYMBOL: &str = "collection_symbol";
 pub const ARG_CONTRACT_WHITELIST: &str = "contract_whitelist";
+
+pub const ARG_ACCOUNT_WHITELIST: &str = "account_whitelist";
 pub const ARG_EVENTS_MODE: &str = "events_mode";
 pub const ARG_HASH_KEY_NAME_1_0_0: &str = "hash_key_name";
 pub const ARG_HOLDER_MODE: &str = "holder_mode";
@@ -57,6 +59,7 @@ pub const ENTRY_POINT_SET_VARIABLES: &str = "set_variables";
 pub const ENTRY_POINT_TRANSFER: &str = "transfer";
 pub const ENTRY_POINT_UPDATED_RECEIPTS: &str = "updated_receipts";
 
+pub const ACCOUNT_WHITELIST: &str = "account_whitelist";
 pub const ALLOW_MINTING: &str = "allow_minting";
 pub const APPROVED: &str = "approved";
 pub const BURN_MODE: &str = "burn_mode";

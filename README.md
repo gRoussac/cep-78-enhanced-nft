@@ -862,3 +862,8 @@ If it is set to `Hash`, you will need to reference the `HASH_BY_INDEX` dictionar
 | 153  | MissingSpenderAccountHash             |
 | 154  | InvalidSpenderAccountHash             |
 | 155  | MissingOwnerTokenIdentifierKey        |
+| 156  | MissingAccountsWhiteList              |
+| 157  | InvalidAccountsWhitelist              |
+| 158  | EmptyAccountsWhitelist                |
+| 159  | EmptyMixedWhitelist                   |
+| 160  | UnlistedAccountHash                   |

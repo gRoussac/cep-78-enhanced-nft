@@ -12,7 +12,7 @@ use casper_contract::{contract_api::runtime, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{self, runtime_args, ContractPackageHash, Key, RuntimeArgs};
 
 const ENTRY_POINT_UPDATE_RECEIPTS: &str = "updated_receipts";
-pub(crate) const ARG_NFT_CONTRACT_PACKAGE_HASH: &str = "nft_contract_package_hash";
+const ARG_NFT_CONTRACT_PACKAGE_HASH: &str = "nft_contract_package_hash";
 
 #[no_mangle]
 pub extern "C" fn call() {
