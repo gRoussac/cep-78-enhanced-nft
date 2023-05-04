@@ -1658,19 +1658,17 @@ fn do_migration() {
 
 #[no_mangle]
 pub extern "C" fn migrate() {
-    let reporting_mode = if runtime::get_key(REPORTING_MODE).is_some() {
-        Some(utils::get_reporting_mode())
-    } else {
-        None
-    };
-
-    if [None, Some(OwnerReverseLookupMode::NoLookUp)].contains(&reporting_mode) {
-        if utils::requires_rlo_migration() && runtime::get_key(RLO_MFLAG).is_none() {
-            do_migration();
-        } else {
-            update_token_supply();
+    if runtime::get_key(REPORTING_MODE).is_some() {
+        if OwnerReverseLookupMode::NoLookUp == utils::get_reporting_mode() {
+            if utils::requires_rlo_migration() && runtime::get_key(RLO_MFLAG).is_none() {
+                do_migration();
+            } else {
+                update_token_supply();
+            }
         }
-    }
+    } else {
+        do_migration();
+    };
 
     let metadata_kind: NFTMetadataKind = utils::get_stored_value_with_user_errors(
         NFT_METADATA_KIND,
