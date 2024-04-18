@@ -1,8 +1,9 @@
 [package]
 name = "tests"
 version = "1.5.1"
-edition = "2018"
-[dependencies]
+edition = "2021"
+
+[dev-dependencies]
 casper-engine-test-support = { version = "7.0.1", default-features = false }
 contract = { path = "../contract", default-features = false }
 casper-execution-engine = { version = "7.0.1", default-features = false }
