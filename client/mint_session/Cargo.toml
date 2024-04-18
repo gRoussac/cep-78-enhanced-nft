@@ -4,8 +4,8 @@ version = "1.5.1"
 edition = "2018"
 
 [dependencies]
-casper-contract = "3.0.0"
-casper-types = "3.0.0"
+casper-contract = "4.0.0"
+casper-types = "4.0.1"
 
 [[bin]]
 name = "mint_call"

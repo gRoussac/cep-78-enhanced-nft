@@ -2445,7 +2445,13 @@ fn generate_entry_points() -> EntryPoints {
     // data if needed
     let migrate = EntryPoint::new(
         ENTRY_POINT_MIGRATE,
-        vec![Parameter::new(ARG_NFT_PACKAGE_KEY, CLType::Any)],
+        vec![
+            Parameter::new(ARG_NFT_PACKAGE_KEY, CLType::String),
+            Parameter::new(ARG_EVENTS_MODE, CLType::U8),
+            Parameter::new(ARG_ACL_PACKAGE_MODE, CLType::Bool),
+            Parameter::new(ARG_PACKAGE_OPERATOR_MODE, CLType::Bool),
+            Parameter::new(ARG_OPERATOR_BURN_MODE, CLType::Bool),
+        ],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
