@@ -18,7 +18,7 @@ use std::collections::BTreeMap;
 
 // Modalities reexports.
 pub use contract::modalities::{
-    EventsMode, MintingMode, NFTHolderMode, NFTKind, OwnershipMode, TokenIdentifier, WhitelistMode,
+    EventsMode, MintingMode, NFTHolderMode, NFTKind, OwnershipMode, WhitelistMode,
 };
 
 use super::constants::{NFT_TEST_COLLECTION, NFT_TEST_SYMBOL};

@@ -1,5 +1,3 @@
-use core::panic;
-
 use crate::utility::{
     constants::{
         ACCOUNT_USER_1, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM,
