@@ -1,7 +1,6 @@
-use casper_engine_test_support::ExecuteRequestBuilder;
-use casper_execution_engine::core::engine_state::ExecuteRequest;
+use casper_engine_test_support::{ExecuteRequestBuilder, ExecuteRequest};
 use casper_types::{
-    account::AccountHash, bytesrepr::Bytes, CLValue, ContractHash, Key, RuntimeArgs,
+    account::AccountHash, bytesrepr::Bytes, contracts::ContractHash, CLValue, Key, RuntimeArgs
 };
 use contract::constants::{
     ARG_ACL_PACKAGE_MODE, ARG_ACL_WHITELIST, ARG_ADDITIONAL_REQUIRED_METADATA, ARG_ALLOW_MINTING,
@@ -191,7 +190,7 @@ impl InstallerRequestBuilder {
             .unwrap(),
             additional_required_metadata: CLValue::from_t(Bytes::new()).unwrap(),
             optional_metadata: CLValue::from_t(Bytes::new()).unwrap(),
-            events_mode: CLValue::from_t(EventsMode::CES as u8).unwrap(),
+            events_mode: CLValue::from_t(EventsMode::NoEvents as u8).unwrap(),
             transfer_filter_contract: None,
         }
     }

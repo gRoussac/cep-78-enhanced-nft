@@ -6,7 +6,7 @@ extern crate alloc;
 use alloc::string::String;
 
 use casper_contract::contract_api::runtime;
-use casper_types::{runtime_args, ContractHash, Key, RuntimeArgs};
+use casper_types::{runtime_args, contracts::ContractHash, Key};
 
 const ENTRY_POINT_TRANSFER: &str = "transfer";
 
@@ -20,7 +20,7 @@ const ARG_SOURCE_KEY: &str = "source_key";
 #[no_mangle]
 pub extern "C" fn call() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
@@ -31,7 +31,7 @@ pub extern "C" fn call() {
         if !runtime::get_named_arg::<bool>(ARG_IS_HASH_IDENTIFIER_MODE) {
             let token_id: u64 = runtime::get_named_arg(ARG_TOKEN_ID);
             runtime::call_contract::<(String, Key)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_TRANSFER,
                 runtime_args! {
                     ARG_TOKEN_ID => token_id,
@@ -42,7 +42,7 @@ pub extern "C" fn call() {
         } else {
             let token_hash: String = runtime::get_named_arg(ARG_TOKEN_HASH);
             runtime::call_contract::<(String, Key)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_TRANSFER,
                 runtime_args! {
                     ARG_TOKEN_HASH => token_hash,

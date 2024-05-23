@@ -8,7 +8,7 @@ extern crate alloc;
 
 use alloc::string::String;
 use casper_contract::{contract_api::runtime, ext_ffi};
-use casper_types::{api_error, runtime_args, ApiError, ContractHash, Key, RuntimeArgs, URef};
+use casper_types::{api_error, runtime_args, ApiError, Key, URef, contracts::ContractHash};
 
 const ENTRY_POINT_MINT: &str = "mint";
 const ENTRY_POINT_REGISTER_OWNER: &str = "register_owner";
@@ -21,7 +21,7 @@ const ARG_TOKEN_HASH: &str = "token_hash";
 #[no_mangle]
 pub extern "C" fn call() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
@@ -35,7 +35,7 @@ pub extern "C" fn call() {
     }
 
     let (register_name, package_uref) = runtime::call_contract::<(String, URef)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner
@@ -45,7 +45,7 @@ pub extern "C" fn call() {
 
     let (receipt_name, owned_tokens_dictionary_key, _token_id_string) =
         runtime::call_contract::<(String, Key, String)>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_MINT,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash,

@@ -8,7 +8,7 @@ extern crate alloc;
 use alloc::string::String;
 
 use casper_contract::contract_api::{runtime, storage};
-use casper_types::{runtime_args, ContractHash, Key, RuntimeArgs};
+use casper_types::{runtime_args, contracts::ContractHash, Key};
 
 const ENTRY_POINT_IS_APPROVED_FOR_ALL: &str = "is_approved_for_all";
 const ARG_NFT_CONTRACT_HASH: &str = "nft_contract_hash";
@@ -19,7 +19,7 @@ const ARG_OPERATOR: &str = "operator";
 #[no_mangle]
 pub extern "C" fn call() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(|hash| ContractHash::new(hash))
         .unwrap();
 
@@ -28,7 +28,7 @@ pub extern "C" fn call() {
     let operator = runtime::get_named_arg::<Key>(ARG_OPERATOR);
 
     let maybe_operator = runtime::call_contract::<bool>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_IS_APPROVED_FOR_ALL,
         runtime_args! {
             ARG_TOKEN_OWNER => owner,

@@ -1,8 +1,7 @@
 use casper_engine_test_support::{
-    ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
-    PRODUCTION_RUN_GENESIS_REQUEST,
+    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
 };
-use casper_types::{account::AccountHash, runtime_args, Key, RuntimeArgs};
+use casper_types::{account::AccountHash, runtime_args, Key};
 use contract::constants::{
     ARG_COLLECTION_NAME, ARG_SOURCE_KEY, ARG_TARGET_KEY, ARG_TOKEN_ID, ARG_TOKEN_META_DATA,
     ARG_TOKEN_OWNER, ENTRY_POINT_REGISTER_OWNER,
@@ -17,15 +16,12 @@ use crate::utility::{
         InstallerRequestBuilder, NFTIdentifierMode, NFTMetadataKind, OwnerReverseLookupMode,
         OwnershipMode,
     },
-    support,
+    support::{self, genesis},
 };
 
 #[test]
 fn mint_cost_should_remain_stable() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_collection_name(NFT_TEST_COLLECTION.to_string())
@@ -94,10 +90,7 @@ fn mint_cost_should_remain_stable() {
 
 #[test]
 fn transfer_costs_should_remain_stable() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_collection_name(NFT_TEST_COLLECTION.to_string())
@@ -131,7 +124,7 @@ fn transfer_costs_should_remain_stable() {
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => Key::Account(AccountHash::new([9u8;32]))
@@ -206,10 +199,7 @@ fn transfer_costs_should_remain_stable() {
 }
 
 fn should_cost_less_when_installing_without_reverse_lookup(reporting: OwnerReverseLookupMode) {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_collection_name(NFT_TEST_COLLECTION.to_string())

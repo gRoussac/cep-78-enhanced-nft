@@ -5,7 +5,7 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use casper_event_standard::Schemas;
+// use casper_event_standard::Schemas;
 use core::{convert::TryInto, mem::MaybeUninit};
 
 use casper_contract::{
@@ -14,11 +14,7 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    account::AccountHash,
-    api_error,
-    bytesrepr::{self, FromBytes, ToBytes},
-    system::CallStackElement,
-    ApiError, CLTyped, ContractHash, ContractPackageHash, Key, URef,
+    account::AccountHash, api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::{ContractHash, ContractPackageHash}, system::Caller, ApiError, CLTyped, Key, URef
 };
 
 use crate::{
@@ -30,10 +26,10 @@ use crate::{
         TRANSFER_FILTER_CONTRACT, UNMATCHED_HASH_COUNT,
     },
     error::NFTCoreError,
-    events::events_ces::{
-        Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
-        Transfer, VariablesSet,
-    },
+    // events::events_ces::{
+    //     Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
+    //     Transfer, VariablesSet,
+    // },
     modalities::{
         BurnMode, MetadataRequirement, MintingMode, NFTHolderMode, NFTIdentifierMode,
         NFTMetadataKind, OwnerReverseLookupMode, OwnershipMode, Requirement, TokenIdentifier,
@@ -288,12 +284,13 @@ pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     (ptr, size, bytes)
 }
 
-pub enum Caller {
+
+pub enum VerifiedCaller {
     Session(AccountHash),
     StoredCaller(ContractHash, ContractPackageHash),
 }
 
-pub fn get_verified_caller() -> Result<Caller, NFTCoreError> {
+pub fn get_verified_caller() -> Result<VerifiedCaller, NFTCoreError> {
     let holder_mode = get_holder_mode()?;
     match *runtime::get_call_stack()
         .iter()
@@ -301,27 +298,22 @@ pub fn get_verified_caller() -> Result<Caller, NFTCoreError> {
         .to_owned()
         .unwrap_or_revert()
     {
-        CallStackElement::Session {
-            account_hash: calling_account_hash,
+        Caller::Initiator {
+            account_hash,
         } => {
             if let NFTHolderMode::Contracts = holder_mode {
                 return Err(NFTCoreError::InvalidHolderMode);
             }
-            Ok(Caller::Session(calling_account_hash))
+            Ok(VerifiedCaller::Session(account_hash))
         }
-        CallStackElement::StoredSession {
-            contract_hash,
-            contract_package_hash,
-            ..
-        }
-        | CallStackElement::StoredContract {
-            contract_hash,
-            contract_package_hash,
+        Caller::Entity {
+            entity_hash,
+            package_hash,
         } => {
             if let NFTHolderMode::Accounts = holder_mode {
                 return Err(NFTCoreError::InvalidHolderMode);
             }
-            Ok(Caller::StoredCaller(contract_hash, contract_package_hash))
+            Ok(VerifiedCaller::StoredCaller(ContractHash::new(entity_hash.value()), ContractPackageHash::new(package_hash.value())))
         }
     }
 }
@@ -805,20 +797,20 @@ pub fn create_metadata_requirements(
     metadata_requirements
 }
 
-// Initializes events-releated named keys and records all event schemas.
-pub fn init_events() {
-    let schemas = Schemas::new()
-        .with::<Mint>()
-        .with::<Burn>()
-        .with::<Approval>()
-        .with::<ApprovalRevoked>()
-        .with::<ApprovalForAll>()
-        .with::<Transfer>()
-        .with::<MetadataUpdated>()
-        .with::<VariablesSet>()
-        .with::<Migration>();
-    casper_event_standard::init(schemas);
-}
+// // Initializes events-releated named keys and records all event schemas.
+// pub fn init_events() {
+//     let schemas = Schemas::new()
+//         .with::<Mint>()
+//         .with::<Burn>()
+//         .with::<Approval>()
+//         .with::<ApprovalRevoked>()
+//         .with::<ApprovalForAll>()
+//         .with::<Transfer>()
+//         .with::<MetadataUpdated>()
+//         .with::<VariablesSet>()
+//         .with::<Migration>();
+//     casper_event_standard::init(schemas);
+// }
 
 pub fn requires_rlo_migration() -> bool {
     match runtime::get_key(MIGRATION_FLAG) {

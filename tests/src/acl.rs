@@ -1,23 +1,19 @@
 use crate::utility::{
     constants::{
-        ACCOUNT_USER_1, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM,
-        MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
-        NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
+        ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM, MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA
     },
     installer_request_builder::{
         InstallerRequestBuilder, MintingMode, NFTHolderMode, NFTMetadataKind,
         OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
     support::{
-        self, assert_expected_error, get_dictionary_value_from_key, get_minting_contract_hash,
-        get_minting_contract_package_hash, get_nft_contract_hash,
+        self, assert_expected_error, genesis, get_dictionary_value_from_key, get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_hash
     },
 };
 use casper_engine_test_support::{
-    ExecuteRequestBuilder, InMemoryWasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
-    PRODUCTION_RUN_GENESIS_REQUEST,
+    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
 };
-use casper_types::{runtime_args, ContractHash, Key, RuntimeArgs};
+use casper_types::{contracts::ContractHash, runtime_args, Key};
 use contract::{
     constants::{
         ACL_WHITELIST, ARG_ACL_WHITELIST, ARG_COLLECTION_NAME, ARG_CONTRACT_WHITELIST,
@@ -31,10 +27,7 @@ use contract::{
 
 #[test]
 fn should_install_with_acl_whitelist() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -78,10 +71,7 @@ fn should_install_with_acl_whitelist() {
 
 #[test]
 fn should_install_with_deprecated_contract_whitelist() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -125,10 +115,7 @@ fn should_install_with_deprecated_contract_whitelist() {
 
 #[test]
 fn should_not_install_with_minting_mode_not_acl_if_acl_whitelist_provided() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let contract_whitelist = vec![ContractHash::default()];
 
@@ -155,10 +142,7 @@ fn should_not_install_with_minting_mode_not_acl_if_acl_whitelist_provided() {
 fn should_disallow_installation_of_contract_with_empty_locked_whitelist_in_public_mode_with_holder_mode(
     nft_holder_mode: NFTHolderMode,
 ) {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_holder_mode(nft_holder_mode)
@@ -185,10 +169,7 @@ fn should_allow_installation_of_contract_with_empty_locked_whitelist_in_public_m
 
 #[test]
 fn should_disallow_installation_with_contract_holder_mode_and_installer_mode() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let contract_whitelist = vec![
         Key::Hash([1u8; 32]),
@@ -216,12 +197,8 @@ fn should_disallow_installation_with_contract_holder_mode_and_installer_mode() {
 
 #[test]
 fn should_allow_whitelisted_account_to_mint() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
-
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let mut builder = genesis();
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
     let account_whitelist = vec![Key::from(account_user_1)];
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
@@ -257,7 +234,7 @@ fn should_allow_whitelisted_account_to_mint() {
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         account_user_1,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -281,10 +258,7 @@ fn should_allow_whitelisted_account_to_mint() {
 
 #[test]
 fn should_disallow_unlisted_account_from_minting() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let account_whitelist = vec![Key::from(*DEFAULT_ACCOUNT_ADDR)];
 
@@ -312,7 +286,7 @@ fn should_disallow_unlisted_account_from_minting() {
 
     assert!(is_whitelisted_account, "acl whitelist is incorrectly set");
 
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -323,7 +297,7 @@ fn should_disallow_unlisted_account_from_minting() {
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         account_user_1,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -341,10 +315,7 @@ fn should_disallow_unlisted_account_from_minting() {
 
 #[test]
 fn should_allow_whitelisted_contract_to_mint() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -394,7 +365,7 @@ fn should_allow_whitelisted_contract_to_mint() {
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -421,10 +392,7 @@ fn should_allow_whitelisted_contract_to_mint() {
 
 #[test]
 fn should_disallow_unlisted_contract_from_minting() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -468,7 +436,7 @@ fn should_disallow_unlisted_contract_from_minting() {
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -486,10 +454,7 @@ fn should_disallow_unlisted_contract_from_minting() {
 
 #[test]
 fn should_allow_mixed_account_contract_to_mint() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -504,7 +469,7 @@ fn should_allow_mixed_account_contract_to_mint() {
         .commit();
 
     let minting_contract_hash = get_minting_contract_hash(&builder);
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
     let mixed_whitelist = vec![Key::from(minting_contract_hash), Key::from(account_user_1)];
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
@@ -541,7 +506,7 @@ fn should_allow_mixed_account_contract_to_mint() {
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -584,7 +549,7 @@ fn should_allow_mixed_account_contract_to_mint() {
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         account_user_1,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -608,10 +573,7 @@ fn should_allow_mixed_account_contract_to_mint() {
 
 #[test]
 fn should_disallow_unlisted_contract_from_minting_with_mixed_account_contract() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -626,7 +588,7 @@ fn should_disallow_unlisted_contract_from_minting_with_mixed_account_contract() 
         .commit();
 
     let minting_contract_hash = get_minting_contract_hash(&builder);
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
     let mixed_whitelist = vec![
         Key::from(ContractHash::from([1u8; 32])),
         Key::from(account_user_1),
@@ -655,7 +617,7 @@ fn should_disallow_unlisted_contract_from_minting_with_mixed_account_contract() 
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -673,10 +635,7 @@ fn should_disallow_unlisted_contract_from_minting_with_mixed_account_contract() 
 
 #[test]
 fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -720,7 +679,7 @@ fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
 
     assert!(is_whitelisted_account, "acl whitelist is incorrectly set");
 
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -731,7 +690,7 @@ fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         account_user_1,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -749,10 +708,7 @@ fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
 
 #[test]
 fn should_disallow_listed_account_from_minting_with_nftholder_contract() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -796,7 +752,7 @@ fn should_disallow_listed_account_from_minting_with_nftholder_contract() {
 
     assert!(is_whitelisted_account, "acl whitelist is incorrectly set");
 
-    let account_user_1 = support::create_funded_dummy_account(&mut builder, Some(ACCOUNT_USER_1));
+    let account_user_1 = ACCOUNT_1_ADDR.to_owned();
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -807,7 +763,7 @@ fn should_disallow_listed_account_from_minting_with_nftholder_contract() {
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         account_user_1,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -821,10 +777,7 @@ fn should_disallow_listed_account_from_minting_with_nftholder_contract() {
 
 #[test]
 fn should_disallow_contract_from_whitelisted_package_to_mint_without_acl_package_mode() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -878,7 +831,7 @@ fn should_disallow_contract_from_whitelisted_package_to_mint_without_acl_package
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -896,10 +849,7 @@ fn should_disallow_contract_from_whitelisted_package_to_mint_without_acl_package
 
 #[test]
 fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -955,7 +905,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -983,10 +933,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
 #[test]
 fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_after_contract_upgrade(
 ) {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1070,7 +1017,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_upgraded_contract_hash,
+        minting_upgraded_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -1099,10 +1046,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
 
 #[test]
 fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_whitelist() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1163,7 +1107,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args.clone(),
     )
@@ -1180,7 +1124,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
     let update_whitelist_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_SET_VARIABLES,
         runtime_args! {
             ARG_CONTRACT_WHITELIST => vec![minting_contract_hash]
@@ -1204,7 +1148,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -1218,10 +1162,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
 #[test]
 fn should_be_able_to_update_whitelist_for_minting() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1282,7 +1223,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args.clone(),
     )
@@ -1299,7 +1240,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
     let update_whitelist_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_SET_VARIABLES,
         runtime_args! {
             ARG_ACL_WHITELIST => vec![Key::from(minting_contract_hash)]
@@ -1323,7 +1264,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
     let mint_via_contract_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
-        minting_contract_hash,
+        minting_contract_hash.into(),
         ENTRY_POINT_MINT,
         mint_runtime_args,
     )
@@ -1339,10 +1280,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
 #[test]
 fn should_upgrade_from_named_keys_to_dict_and_acl_minting_mode() {
-    let mut builder = InMemoryWasmTestBuilder::default();
-    builder
-        .run_genesis(&PRODUCTION_RUN_GENESIS_REQUEST)
-        .commit();
+    let mut builder = genesis();
 
     let minting_contract_install_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,

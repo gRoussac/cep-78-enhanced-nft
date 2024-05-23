@@ -29,9 +29,7 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    contracts::NamedKeys, runtime_args, CLType, CLValue, ContractHash, ContractPackageHash,
-    EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key, KeyTag, Parameter, RuntimeArgs,
-    Tagged,
+    addressable_entity::NamedKeys, contracts::{ContractHash, ContractPackageHash}, runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key, KeyTag, Parameter, RuntimeArgs, Tagged
 };
 use constants::{
     ACCESS_KEY_NAME_1_0_0, ACL_PACKAGE_MODE, ACL_WHITELIST, ALLOW_MINTING, APPROVED,
@@ -64,10 +62,10 @@ use core::convert::{TryFrom, TryInto};
 use error::NFTCoreError;
 use events::{
     events_cep47::{record_cep47_event_dictionary, CEP47Event},
-    events_ces::{
-        Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
-        RevokedForAll, Transfer, VariablesSet,
-    },
+    // events_ces::{
+    //     Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
+    //     RevokedForAll, Transfer, VariablesSet,
+    // },
 };
 use metadata::CustomMetadataSchema;
 use modalities::{
@@ -75,7 +73,7 @@ use modalities::{
     NFTKind, NFTMetadataKind, NamedKeyConventionMode, OwnerReverseLookupMode, OwnershipMode,
     Requirement, TokenIdentifier, TransferFilterContractResult, WhitelistMode,
 };
-use utils::Caller;
+use utils::VerifiedCaller;
 
 #[no_mangle]
 pub extern "C" fn init() {
@@ -336,7 +334,7 @@ pub extern "C" fn init() {
         transfer_filter_contract_contract_key.map(|transfer_filter_contract_contract_key| {
             ContractHash::from(
                 transfer_filter_contract_contract_key
-                    .into_hash()
+                    .into_hash_addr()
                     .unwrap_or_revert(),
             )
         });
@@ -412,9 +410,9 @@ pub extern "C" fn init() {
     .unwrap_or_revert();
 
     // Initialize events structures for CES.
-    if let EventsMode::CES = events_mode {
-        utils::init_events();
-    }
+    // if let EventsMode::CES = events_mode {
+    //     utils::init_events();
+    // }
     runtime::put_key(EVENTS_MODE, storage::new_uref(events_mode as u8).into());
 
     // Initialize contract with variables which must be present but maybe set to
@@ -610,7 +608,7 @@ pub extern "C" fn set_variables() {
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::VariablesSet),
-        EventsMode::CES => casper_event_standard::emit(VariablesSet::new()),
+        EventsMode::CES => ()//casper_event_standard::emit(VariablesSet::new()),
     }
 }
 
@@ -658,8 +656,8 @@ pub extern "C" fn mint() {
 
     let (caller, contract_package): (Key, Option<Key>) =
         match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => (account_hash.into(), None),
-            Caller::StoredCaller(contract_hash, contract_package_hash) => {
+            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
+            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
                 (contract_hash.into(), Some(contract_package_hash.into()))
             }
         };
@@ -834,11 +832,11 @@ pub extern "C" fn mint() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => casper_event_standard::emit(Mint::new(
-            token_owner_key,
-            token_identifier.clone(),
-            token_metadata,
-        )),
+        EventsMode::CES => {} //casper_event_standard::emit(Mint::new(
+        //     token_owner_key,
+        //     token_identifier.clone(),
+        //     token_metadata,
+        // )),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Mint {
             recipient: token_owner_key,
             token_id: token_identifier.clone(),
@@ -888,8 +886,8 @@ pub extern "C" fn burn() {
 
     let (caller, contract_package): (Key, Option<Key>) =
         match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => (account_hash.into(), None),
-            Caller::StoredCaller(contract_hash, contract_package_hash) => {
+            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
+            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
                 (contract_hash.into(), Some(contract_package_hash.into()))
             }
         };
@@ -986,9 +984,9 @@ pub extern "C" fn burn() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {
-            casper_event_standard::emit(Burn::new(token_owner, token_identifier, caller))
-        }
+        EventsMode::CES => {}
+        //     casper_event_standard::emit(Burn::new(token_owner, token_identifier, caller))
+        // }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Burn {
             owner: token_owner,
             token_id: token_identifier,
@@ -1010,8 +1008,8 @@ pub extern "C" fn approve() {
 
     let (caller, contract_package): (Key, Option<Key>) =
         match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => (account_hash.into(), None),
-            Caller::StoredCaller(contract_hash, contract_package_hash) => {
+            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
+            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
                 (contract_hash.into(), Some(contract_package_hash.into()))
             }
         };
@@ -1124,7 +1122,7 @@ pub extern "C" fn approve() {
     // Emit Approval event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => casper_event_standard::emit(Approval::new(owner, spender, token_id)),
+        EventsMode::CES => {}//casper_event_standard::emit(Approval::new(owner, spender, token_id)),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::ApprovalGranted {
             owner,
             spender,
@@ -1146,8 +1144,8 @@ pub extern "C" fn revoke() {
 
     let (caller, contract_package): (Key, Option<Key>) =
         match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => (account_hash.into(), None),
-            Caller::StoredCaller(contract_hash, contract_package_hash) => {
+            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
+            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
                 (contract_hash.into(), Some(contract_package_hash.into()))
             }
         };
@@ -1242,7 +1240,7 @@ pub extern "C" fn revoke() {
     // Emit ApprovalRevoked event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => casper_event_standard::emit(ApprovalRevoked::new(owner, token_id)),
+        EventsMode::CES => {}//casper_event_standard::emit(ApprovalRevoked::new(owner, token_id)),
         EventsMode::CEP47 => {
             record_cep47_event_dictionary(CEP47Event::ApprovalRevoked { owner, token_id })
         }
@@ -1270,8 +1268,8 @@ pub extern "C" fn set_approval_for_all() {
     .unwrap_or_revert();
 
     let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-        Caller::Session(account_hash) => account_hash.into(),
-        Caller::StoredCaller(contract_hash, _) => contract_hash.into(),
+        VerifiedCaller::Session(account_hash) => account_hash.into(),
+        VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
     };
 
     let operator = utils::get_named_arg_with_user_errors::<Key>(
@@ -1300,13 +1298,13 @@ pub extern "C" fn set_approval_for_all() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {
-            if approve_all {
-                casper_event_standard::emit(ApprovalForAll::new(caller, operator));
-            } else {
-                casper_event_standard::emit(RevokedForAll::new(caller, operator));
-            }
-        }
+        EventsMode::CES => {}
+        //     if approve_all {
+        //         casper_event_standard::emit(ApprovalForAll::new(caller, operator));
+        //     } else {
+        //         casper_event_standard::emit(RevokedForAll::new(caller, operator));
+        //     }
+        // }
         EventsMode::CEP47 => {
             if approve_all {
                 record_cep47_event_dictionary(CEP47Event::ApprovalForAll {
@@ -1401,8 +1399,8 @@ pub extern "C" fn transfer() {
 
     let (caller, contract_package): (Key, Option<Key>) =
         match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => (account_hash.into(), None),
-            Caller::StoredCaller(contract_hash, contract_package_hash) => {
+            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
+            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
                 (contract_hash.into(), Some(contract_package_hash.into()))
             }
         };
@@ -1467,7 +1465,7 @@ pub extern "C" fn transfer() {
         }
 
         let result: TransferFilterContractResult =
-            call_contract::<u8>(filter_contract, TRANSFER_FILTER_CONTRACT_METHOD, args).into();
+            call_contract::<u8>(filter_contract.into(), TRANSFER_FILTER_CONTRACT_METHOD, args).into();
         if TransferFilterContractResult::DenyTransfer == result {
             revert(NFTCoreError::TransferFilterContractDenied);
         }
@@ -1572,16 +1570,16 @@ pub extern "C" fn transfer() {
             recipient: target_owner_key,
             token_id: token_identifier.clone(),
         }),
-        EventsMode::CES => {
-            // Emit Transfer event.
-            let spender = if caller == owner { None } else { Some(caller) };
-            casper_event_standard::emit(Transfer::new(
-                owner,
-                spender,
-                target_owner_key,
-                token_identifier.clone(),
-            ));
-        }
+        EventsMode::CES => {}
+        //     // Emit Transfer event.
+        //     let spender = if caller == owner { None } else { Some(caller) };
+        //     casper_event_standard::emit(Transfer::new(
+        //         owner,
+        //         spender,
+        //         target_owner_key,
+        //         token_identifier.clone(),
+        //     ));
+        // }
     }
 
     let reporting_mode = utils::get_reporting_mode();
@@ -1800,8 +1798,8 @@ pub extern "C" fn set_token_metadata() {
 
     if let Some(token_owner_key) = token_owner {
         let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => account_hash.into(),
-            Caller::StoredCaller(contract_hash, _) => contract_hash.into(),
+            VerifiedCaller::Session(account_hash) => account_hash.into(),
+            VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
         };
         if caller != token_owner_key {
             runtime::revert(NFTCoreError::InvalidTokenOwner)
@@ -1856,12 +1854,12 @@ pub extern "C" fn set_token_metadata() {
     // Emit MetadataUpdate event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {
-            casper_event_standard::emit(MetadataUpdated::new(
-                token_identifier,
-                updated_token_metadata,
-            ));
-        }
+        EventsMode::CES => {}
+        //     casper_event_standard::emit(MetadataUpdated::new(
+        //         token_identifier,
+        //         updated_token_metadata,
+        //     ));
+        // }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::MetadataUpdate {
             token_id: token_identifier,
         }),
@@ -2019,12 +2017,12 @@ pub extern "C" fn migrate() {
             .try_into()
             .unwrap_or_revert_with(NFTCoreError::InvalidEventsMode);
         match (current_events_mode, requested_events_mode) {
-            (EventsMode::CES, EventsMode::CES) => casper_event_standard::emit(Migration::new()),
-            (_, EventsMode::CES) => {
-                // Initialize events structures.
-                utils::init_events();
-                casper_event_standard::emit(Migration::new());
-            }
+            // (EventsMode::CES, EventsMode::CES) => casper_event_standard::emit(Migration::new()),
+            // (_, EventsMode::CES) => {
+            //     // Initialize events structures.
+            //     utils::init_events();
+            //     casper_event_standard::emit(Migration::new());
+            // }
             (_, EventsMode::CEP47) => record_cep47_event_dictionary(CEP47Event::Migrate),
             (_, _) => {}
         }
@@ -2032,7 +2030,7 @@ pub extern "C" fn migrate() {
     } else {
         match current_events_mode {
             EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Migrate),
-            EventsMode::CES => casper_event_standard::emit(Migration::new()),
+            // EventsMode::CES => casper_event_standard::emit(Migration::new()),
             _ => {
                 // Store "no events" mode in case it was never stored like version < 1.2
                 if !runtime::has_key(EVENTS_MODE) {
@@ -2111,8 +2109,8 @@ pub extern "C" fn migrate() {
 pub extern "C" fn updated_receipts() {
     if let OwnerReverseLookupMode::Complete = utils::get_reporting_mode() {
         let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-            Caller::Session(account_hash) => account_hash.into(),
-            Caller::StoredCaller(contract_hash, _) => contract_hash.into(),
+            VerifiedCaller::Session(account_hash) => account_hash.into(),
+            VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
         };
 
         let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
@@ -2165,8 +2163,8 @@ pub extern "C" fn register_owner() {
     {
         let owner_key = match utils::get_ownership_mode().unwrap_or_revert() {
             OwnershipMode::Minter => match utils::get_verified_caller().unwrap_or_revert() {
-                Caller::Session(account_hash) => account_hash.into(),
-                Caller::StoredCaller(contract_hash, _) => contract_hash.into(),
+                VerifiedCaller::Session(account_hash) => account_hash.into(),
+                VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
             },
             OwnershipMode::Assigned | OwnershipMode::Transferable => {
                 utils::get_named_arg_with_user_errors::<Key>(
@@ -2254,7 +2252,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint exposes all variables that can be changed by managing account post
@@ -2282,7 +2280,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint mints a new token with provided metadata.
@@ -2311,7 +2309,7 @@ fn generate_entry_points() -> EntryPoints {
             Box::new(CLType::String),
         ]),
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint burns the token with provided token_id argument, after which it is no
@@ -2325,7 +2323,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint transfers ownership of token from one account to another.
@@ -2340,7 +2338,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Tuple2([Box::new(CLType::String), Box::new(CLType::Key)]),
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint approves another token holder (an approved account) to transfer tokens. It
@@ -2351,7 +2349,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_SPENDER, CLType::Key)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint revokes an approved account to transfer tokens. It reverts
@@ -2362,7 +2360,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint approves all tokens owned by the caller and future to another token holder
@@ -2376,7 +2374,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint returns if an account is operator for a token owner
@@ -2388,7 +2386,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Bool,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint returns the token owner given a token_id. It reverts if token_id
@@ -2398,7 +2396,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![], // <- either HASH or INDEX
         CLType::Key,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint returns the approved account (if any) associated with the provided token_id
@@ -2408,7 +2406,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![], // <- either HASH or INDEX
         CLType::Option(Box::new(CLType::Key)),
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint returns number of owned tokens associated with the provided token holder
@@ -2417,7 +2415,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_TOKEN_OWNER, CLType::Key)],
         CLType::U64,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint returns the metadata associated with the provided token_id
@@ -2426,7 +2424,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![], // <- either HASH or INDEX
         CLType::String,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint updates the metadata if valid.
@@ -2435,7 +2433,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_TOKEN_META_DATA, CLType::String)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint will upgrade the contract from the 1_0 version to the
@@ -2454,7 +2452,7 @@ fn generate_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint will allow NFT owners to update their receipts from
@@ -2469,7 +2467,7 @@ fn generate_entry_points() -> EntryPoints {
             Box::new(CLType::Key),
         ]))),
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     // This entrypoint allows users to register with a give CEP-78 instance,
@@ -2483,7 +2481,7 @@ fn generate_entry_points() -> EntryPoints {
         vec![],
         CLType::Tuple2([Box::new(CLType::String), Box::new(CLType::URef)]),
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
     );
 
     entry_points.add_entry_point(init_contract);
@@ -2744,12 +2742,13 @@ fn install_contract() {
         Some(named_keys),
         Some(hash_key_name.clone()),
         Some(format!("{PREFIX_ACCESS_KEY_NAME}_{collection_name}")),
+        None
     );
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        contract_hash.into(),
+        Key::Hash(contract_hash.value()),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
@@ -2758,7 +2757,7 @@ fn install_contract() {
 
     let nft_contract_package_hash: ContractPackageHash = runtime::get_key(&hash_key_name)
         .unwrap_or_revert()
-        .into_hash()
+        .into_hash_addr()
         .map(ContractPackageHash::new)
         .unwrap();
 
@@ -2810,8 +2809,7 @@ fn install_contract() {
 fn migrate_contract(access_key_name: String, package_key_name: String) {
     let nft_contract_package_hash = runtime::get_key(&package_key_name)
         .unwrap_or_revert()
-        .into_hash()
-        .map(ContractPackageHash::new)
+        .into_package_hash()
         .unwrap_or_revert_with(NFTCoreError::MissingPackageHashForUpgrade);
 
     let collection_name: String = utils::get_named_arg_with_user_errors(
@@ -2837,12 +2835,13 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
         nft_contract_package_hash,
         generate_entry_points(),
         NamedKeys::new(),
+        BTreeMap::new()
     );
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        contract_hash.into(),
+        Key::Hash(contract_hash.value()),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
