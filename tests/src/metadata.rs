@@ -1,8 +1,6 @@
 use core::panic;
 
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{account::AccountHash, runtime_args, Key};
 use contract::{
     constants::{
@@ -26,7 +24,9 @@ use crate::utility::{
         NFTMetadataKind, OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
         TEST_CUSTOM_METADATA, TEST_CUSTOM_METADATA_SCHEMA, TEST_CUSTOM_UPDATED_METADATA,
     },
-    support::{self, assert_expected_error, genesis, get_minting_contract_hash, get_nft_contract_hash},
+    support::{
+        self, assert_expected_error, genesis, get_minting_contract_hash, get_nft_contract_hash,
+    },
 };
 
 #[test]

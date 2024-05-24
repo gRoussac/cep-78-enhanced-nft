@@ -13,13 +13,18 @@ use contract::{
 use serde::{Deserialize, Serialize};
 
 use casper_engine_test_support::{
-    ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR
+    ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
 };
 use casper_types::{account::AccountHash, runtime_args, CLValue, Key};
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME, ARG_NFT_CONTRACT_HASH, BALANCE_OF_SESSION_WASM, CONTRACT_NAME, GET_APPROVED_WASM, IS_APPROVED_FOR_ALL_WASM, MALFORMED_META_DATA, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, OWNER_OF_SESSION_WASM, PAGE_SIZE, TEST_COMPACT_META_DATA, TEST_PRETTY_721_META_DATA, TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_CEP78_METADATA, TRANSFER_SESSION_WASM
+        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME,
+        ARG_NFT_CONTRACT_HASH, BALANCE_OF_SESSION_WASM, CONTRACT_NAME, GET_APPROVED_WASM,
+        IS_APPROVED_FOR_ALL_WASM, MALFORMED_META_DATA, MINT_SESSION_WASM, NFT_CONTRACT_WASM,
+        NFT_TEST_COLLECTION, OWNER_OF_SESSION_WASM, PAGE_SIZE, TEST_COMPACT_META_DATA,
+        TEST_PRETTY_721_META_DATA, TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_CEP78_METADATA,
+        TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
@@ -27,7 +32,8 @@ use crate::utility::{
         TEST_CUSTOM_METADATA, TEST_CUSTOM_METADATA_SCHEMA,
     },
     support::{
-        self, assert_expected_error, call_session_code_with_ret, genesis, get_dictionary_value_from_key, get_nft_contract_hash, get_token_page_by_hash
+        self, assert_expected_error, call_session_code_with_ret, genesis,
+        get_dictionary_value_from_key, get_nft_contract_hash, get_token_page_by_hash,
     },
 };
 
@@ -254,7 +260,9 @@ fn mint_should_return_dictionary_key_to_callers_owned_tokens() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let account = builder.get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR).unwrap();
+    let account = builder
+        .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
+        .unwrap();
 
     let nft_receipt: String =
         support::query_stored_value(&builder, nft_contract_key, vec![RECEIPT_NAME.to_string()]);

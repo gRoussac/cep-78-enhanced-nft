@@ -81,7 +81,9 @@ check-lint: clippy
 	cd test-contracts/transfer_filter_contract && cargo fmt -- --check
 	cd tests && cargo fmt -- --check
 
-lint: clippy
+lint: clippy fmt
+
+format:
 	cd contract && cargo fmt
 	cd client/mint_session && cargo fmt
 	cd client/balance_of_session && cargo fmt
@@ -89,9 +91,9 @@ lint: clippy
 	cd client/get_approved_session && cargo fmt
 	cd client/transfer_session && cargo fmt
 	cd client/updated_receipts && cargo fmt
-	cd test-contracts/minting_contract
-	cd test-contracts/mangle_named_keys
-	cd test-contracts/transfer_filter_contract
+	cd test-contracts/minting_contract && cargo fmt
+	cd test-contracts/mangle_named_keys && cargo fmt
+	cd test-contracts/transfer_filter_contract && cargo fmt
 	cd tests && cargo fmt
 
 clean:

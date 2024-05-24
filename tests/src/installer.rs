@@ -1,6 +1,4 @@
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 // use casper_event_standard::Schemas;
 use casper_types::{contracts::ContractHash, runtime_args, CLValue, Key};
 use contract::{
@@ -21,7 +19,10 @@ use crate::utility::{
         InstallerRequestBuilder, MintingMode, NFTHolderMode, NFTIdentifierMode, NFTMetadataKind,
         OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
-    support::{self, genesis, get_dictionary_value_from_key, get_nft_contract_hash},
+    support::{
+        self, contract_hash_to_entity_addr_key, genesis, get_dictionary_value_from_key,
+        get_nft_contract_hash,
+    },
 };
 
 #[test]
@@ -37,7 +38,7 @@ fn should_install_contract() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = contract_hash_to_entity_addr_key(&get_nft_contract_hash(&builder));
 
     let query_result: String = support::query_stored_value(
         &builder,
@@ -234,7 +235,7 @@ fn should_install_with_contract_holder_mode() {
         .expect_success()
         .commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = contract_hash_to_entity_addr_key(&get_nft_contract_hash(&builder));
 
     let actual_holder_mode: u8 = support::query_stored_value(
         &builder,

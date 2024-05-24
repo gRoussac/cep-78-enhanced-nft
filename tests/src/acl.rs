@@ -1,18 +1,19 @@
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM, MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA
+        ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM,
+        MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
+        NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MintingMode, NFTHolderMode, NFTMetadataKind,
         OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
     support::{
-        self, assert_expected_error, genesis, get_dictionary_value_from_key, get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_hash
+        self, assert_expected_error, genesis, get_dictionary_value_from_key,
+        get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_hash,
     },
 };
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{contracts::ContractHash, runtime_args, Key};
 use contract::{
     constants::{

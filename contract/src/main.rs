@@ -29,7 +29,10 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    addressable_entity::NamedKeys, contracts::{ContractHash, ContractPackageHash}, runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key, KeyTag, Parameter, RuntimeArgs, Tagged
+    addressable_entity::NamedKeys,
+    contracts::{ContractHash, ContractPackageHash},
+    runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key,
+    KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged,
 };
 use constants::{
     ACCESS_KEY_NAME_1_0_0, ACL_PACKAGE_MODE, ACL_WHITELIST, ALLOW_MINTING, APPROVED,
@@ -60,13 +63,7 @@ use constants::{
 };
 use core::convert::{TryFrom, TryInto};
 use error::NFTCoreError;
-use events::{
-    events_cep47::{record_cep47_event_dictionary, CEP47Event},
-    // events_ces::{
-    //     Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
-    //     RevokedForAll, Transfer, VariablesSet,
-    // },
-};
+use events::events_cep47::{record_cep47_event_dictionary, CEP47Event};
 use metadata::CustomMetadataSchema;
 use modalities::{
     BurnMode, EventsMode, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
@@ -608,7 +605,7 @@ pub extern "C" fn set_variables() {
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::VariablesSet),
-        EventsMode::CES => ()//casper_event_standard::emit(VariablesSet::new()),
+        EventsMode::CES => (), //casper_event_standard::emit(VariablesSet::new()),
     }
 }
 
@@ -1122,7 +1119,8 @@ pub extern "C" fn approve() {
     // Emit Approval event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {}//casper_event_standard::emit(Approval::new(owner, spender, token_id)),
+        EventsMode::CES => {} /* casper_event_standard::emit(Approval::new(owner, spender,
+                                * token_id)), */
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::ApprovalGranted {
             owner,
             spender,
@@ -1240,7 +1238,8 @@ pub extern "C" fn revoke() {
     // Emit ApprovalRevoked event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {}//casper_event_standard::emit(ApprovalRevoked::new(owner, token_id)),
+        EventsMode::CES => {} //casper_event_standard::emit(ApprovalRevoked::new(owner,
+        // token_id)),
         EventsMode::CEP47 => {
             record_cep47_event_dictionary(CEP47Event::ApprovalRevoked { owner, token_id })
         }
@@ -1452,20 +1451,28 @@ pub extern "C" fn transfer() {
 
     if let Some(filter_contract) = utils::get_transfer_filter_contract() {
         let mut args = RuntimeArgs::new();
-        args.insert(ARG_SOURCE_KEY, source_owner_key).unwrap();
-        args.insert(ARG_TARGET_KEY, owner).unwrap();
+        args.insert(ARG_SOURCE_KEY, source_owner_key)
+            .unwrap_or_revert_with(NFTCoreError::CannotInsertArg);
+        args.insert(ARG_TARGET_KEY, owner)
+            .unwrap_or_revert_with(NFTCoreError::CannotInsertArg);
 
         match &token_identifier {
             TokenIdentifier::Index(idx) => {
-                args.insert(ARG_TOKEN_ID, *idx).unwrap();
+                args.insert(ARG_TOKEN_ID, *idx)
+                    .unwrap_or_revert_with(NFTCoreError::CannotInsertArg);
             }
             TokenIdentifier::Hash(hash) => {
-                args.insert(ARG_TOKEN_ID, hash.clone()).unwrap();
+                args.insert(ARG_TOKEN_ID, hash.clone())
+                    .unwrap_or_revert_with(NFTCoreError::CannotInsertArg);
             }
         }
 
-        let result: TransferFilterContractResult =
-            call_contract::<u8>(filter_contract.into(), TRANSFER_FILTER_CONTRACT_METHOD, args).into();
+        let result: TransferFilterContractResult = call_contract::<u8>(
+            filter_contract.into(),
+            TRANSFER_FILTER_CONTRACT_METHOD,
+            args,
+        )
+        .into();
         if TransferFilterContractResult::DenyTransfer == result {
             revert(NFTCoreError::TransferFilterContractDenied);
         }
@@ -1570,16 +1577,16 @@ pub extern "C" fn transfer() {
             recipient: target_owner_key,
             token_id: token_identifier.clone(),
         }),
-        EventsMode::CES => {}
-        //     // Emit Transfer event.
-        //     let spender = if caller == owner { None } else { Some(caller) };
-        //     casper_event_standard::emit(Transfer::new(
-        //         owner,
-        //         spender,
-        //         target_owner_key,
-        //         token_identifier.clone(),
-        //     ));
-        // }
+        EventsMode::CES => {} /*     // Emit Transfer event.
+                               *     let spender = if caller == owner { None } else {
+                               * Some(caller) };
+                               *     casper_event_standard::emit(Transfer::new(
+                               *         owner,
+                               *         spender,
+                               *         target_owner_key,
+                               *         token_identifier.clone(),
+                               *     ));
+                               * } */
     }
 
     let reporting_mode = utils::get_reporting_mode();
@@ -2742,7 +2749,7 @@ fn install_contract() {
         Some(named_keys),
         Some(hash_key_name.clone()),
         Some(format!("{PREFIX_ACCESS_KEY_NAME}_{collection_name}")),
-        None
+        None,
     );
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
@@ -2755,11 +2762,10 @@ fn install_contract() {
         storage::new_uref(contract_version).into(),
     );
 
-    let nft_contract_package_hash: ContractPackageHash = runtime::get_key(&hash_key_name)
+    let nft_contract_package_hash: PackageHash = runtime::get_key(&hash_key_name)
         .unwrap_or_revert()
-        .into_hash_addr()
-        .map(ContractPackageHash::new)
-        .unwrap();
+        .into_package_hash()
+        .unwrap_or_revert_with(NFTCoreError::InvalidPackageHash);
 
     let events_mode: u8 = utils::get_optional_named_arg_with_user_errors(
         ARG_EVENTS_MODE,
@@ -2835,7 +2841,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
         nft_contract_package_hash,
         generate_entry_points(),
         NamedKeys::new(),
-        BTreeMap::new()
+        BTreeMap::new(),
     );
 
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION

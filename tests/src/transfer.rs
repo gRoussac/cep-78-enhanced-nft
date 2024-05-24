@@ -1,10 +1,8 @@
 use casper_engine_test_support::{
-    ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY
+    ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY,
 };
 
-use casper_types::{
-    account::AccountHash, runtime_args, Key,
-};
+use casper_types::{account::AccountHash, runtime_args, Key};
 use contract::{
     constants::{
         ACL_WHITELIST, APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_OPERATOR,
@@ -12,20 +10,27 @@ use contract::{
         ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, ENTRY_POINT_APPROVE, ENTRY_POINT_MINT,
         ENTRY_POINT_REGISTER_OWNER, ENTRY_POINT_REVOKE, ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         ENTRY_POINT_TRANSFER, PAGE_TABLE, TOKEN_COUNT, TOKEN_OWNERS,
-    }, modalities::TransferFilterContractResult,
+    },
+    modalities::TransferFilterContractResult,
     // events::events_ces::{Approval, ApprovalRevoked, Transfer},
 };
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_FILTER_CONTRACT_RETURN_VALUE, ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA, TRANSFER_FILTER_CONTRACT_WASM, TRANSFER_SESSION_WASM
+        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_FILTER_CONTRACT_RETURN_VALUE,
+        ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP,
+        MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
+        NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA, TRANSFER_FILTER_CONTRACT_WASM,
+        TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
         NFTMetadataKind, OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
     support::{
-        self, assert_expected_error, genesis, get_dictionary_value_from_key, get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_hash, get_transfer_filter_contract_hash
+        self, assert_expected_error, genesis, get_dictionary_value_from_key,
+        get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_hash,
+        get_transfer_filter_contract_hash,
     },
 };
 

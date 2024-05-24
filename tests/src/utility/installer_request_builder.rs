@@ -1,6 +1,6 @@
-use casper_engine_test_support::{ExecuteRequestBuilder, ExecuteRequest};
+use casper_engine_test_support::{ExecuteRequest, ExecuteRequestBuilder};
 use casper_types::{
-    account::AccountHash, bytesrepr::Bytes, contracts::ContractHash, CLValue, Key, RuntimeArgs
+    account::AccountHash, bytesrepr::Bytes, contracts::ContractHash, CLValue, Key, RuntimeArgs,
 };
 use contract::constants::{
     ARG_ACL_PACKAGE_MODE, ARG_ACL_WHITELIST, ARG_ADDITIONAL_REQUIRED_METADATA, ARG_ALLOW_MINTING,

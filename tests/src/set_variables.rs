@@ -1,6 +1,4 @@
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{contracts::ContractHash, runtime_args, Key};
 use contract::{
     constants::{
@@ -14,7 +12,7 @@ use contract::{
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, CONTRACT_NAME, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL
+        ACCOUNT_1_ADDR, CONTRACT_NAME, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL,
     },
     installer_request_builder::{InstallerRequestBuilder, OwnerReverseLookupMode},
     support::{self, assert_expected_error, genesis, get_nft_contract_hash},
@@ -24,8 +22,7 @@ use crate::utility::{
 fn only_installer_should_be_able_to_toggle_allow_minting() {
     let mut builder = genesis();
 
-    let other_user_account =
-        ACCOUNT_1_ADDR.to_owned();
+    let other_user_account = ACCOUNT_1_ADDR.to_owned();
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_collection_name(NFT_TEST_COLLECTION.to_string())
@@ -108,13 +105,16 @@ fn installer_should_be_able_to_toggle_acl_package_mode() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let account = builder.get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR).unwrap();
+    let account = builder
+        .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
+        .unwrap();
     let nft_contract_key: Key = *account
         .named_keys()
         .get(CONTRACT_NAME)
         .expect("must have key in named keys");
 
-    let nft_contract_hash = nft_contract_key.into_hash_addr()
+    let nft_contract_hash = nft_contract_key
+        .into_hash_addr()
         .map(ContractHash::new)
         .expect("failed to find nft contract");
 
@@ -167,13 +167,16 @@ fn installer_should_be_able_to_toggle_package_operator_mode() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let account = builder.get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR).unwrap();
+    let account = builder
+        .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
+        .unwrap();
     let nft_contract_key: Key = *account
         .named_keys()
         .get(CONTRACT_NAME)
         .expect("must have key in named keys");
 
-    let nft_contract_hash = nft_contract_key.into_hash_addr()
+    let nft_contract_hash = nft_contract_key
+        .into_hash_addr()
         .map(ContractHash::new)
         .expect("failed to find nft contract");
 
@@ -226,13 +229,16 @@ fn installer_should_be_able_to_toggle_operator_burn_mode() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let account = builder.get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR).unwrap();
+    let account = builder
+        .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
+        .unwrap();
     let nft_contract_key: Key = *account
         .named_keys()
         .get(CONTRACT_NAME)
         .expect("must have key in named keys");
 
-    let nft_contract_hash = nft_contract_key.into_hash_addr()
+    let nft_contract_hash = nft_contract_key
+        .into_hash_addr()
         .map(ContractHash::new)
         .expect("failed to find nft contract");
 

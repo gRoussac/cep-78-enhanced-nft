@@ -1,5 +1,9 @@
 use super::{
-    constants::{ACCOUNT_1_PUBLIC_KEY, ACCOUNT_2_PUBLIC_KEY, ACCOUNT_3_PUBLIC_KEY, MINTING_CONTRACT_PACKAGE_NAME}, installer_request_builder::InstallerRequestBuilder,
+    constants::{
+        ACCOUNT_1_PUBLIC_KEY, ACCOUNT_2_PUBLIC_KEY, ACCOUNT_3_PUBLIC_KEY,
+        MINTING_CONTRACT_PACKAGE_NAME,
+    },
+    installer_request_builder::InstallerRequestBuilder,
 };
 use crate::utility::constants::{
     ARG_KEY_NAME, ARG_NFT_CONTRACT_HASH, CONTRACT_NAME, MINTING_CONTRACT_NAME, PAGE_SIZE,
@@ -10,13 +14,18 @@ use blake2::{
     VarBlake2b,
 };
 use casper_engine_test_support::{
-    utils::create_run_genesis_request, ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY
+    utils::create_run_genesis_request, ExecuteRequestBuilder, LmdbWasmTestBuilder,
+    DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY,
 };
 
 use casper_execution_engine::{engine_state::Error as EngineStateError, execution::ExecError};
 
 use casper_types::{
-    account::AccountHash, bytesrepr::{Bytes, FromBytes}, contracts::{ContractHash, ContractPackageHash}, ApiError, CLTyped, CLValueError, GenesisAccount, Key, Motes, RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512
+    account::AccountHash,
+    bytesrepr::{Bytes, FromBytes},
+    contracts::{ContractHash, ContractPackageHash},
+    AddressableEntity, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes,
+    RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512,
 };
 use contract::constants::{HASH_KEY_NAME_1_0_0, INDEX_BY_HASH, PREFIX_PAGE_DICTIONARY};
 use rand::prelude::*;
@@ -24,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use sha256::digest;
 use std::fmt::Debug;
 
-pub(crate) fn genesis() -> LmdbWasmTestBuilder{
+pub(crate) fn genesis() -> LmdbWasmTestBuilder {
     let mut builder = LmdbWasmTestBuilder::default();
     builder.run_genesis(create_run_genesis_request(vec![
         GenesisAccount::Account {
@@ -51,13 +60,13 @@ pub(crate) fn genesis() -> LmdbWasmTestBuilder{
     builder
 }
 
-pub(crate) fn get_nft_contract_hash(
-    builder: &LmdbWasmTestBuilder,
-) -> ContractHash {
-    let nft_hash_addr = builder
+pub(crate) fn get_nft_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {
+    let account = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
-        .unwrap()
-        .named_keys()
+        .unwrap();
+    let named_keys = account.named_keys();
+
+    let nft_hash_addr = named_keys
         .get(CONTRACT_NAME)
         .expect("must have this entry in named keys")
         .into_hash_addr()
@@ -66,9 +75,11 @@ pub(crate) fn get_nft_contract_hash(
     ContractHash::new(nft_hash_addr)
 }
 
-pub(crate) fn get_nft_contract_package_hash(
-    builder: &LmdbWasmTestBuilder,
-) -> ContractPackageHash {
+pub(crate) fn contract_hash_to_entity_addr_key(hash: &ContractHash) -> Key {
+    Key::AddressableEntity(EntityAddr::SmartContract(hash.value()))
+}
+
+pub(crate) fn get_nft_contract_package_hash(builder: &LmdbWasmTestBuilder) -> ContractPackageHash {
     let nft_hash_addr = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
@@ -81,9 +92,7 @@ pub(crate) fn get_nft_contract_package_hash(
     ContractPackageHash::new(nft_hash_addr)
 }
 
-pub(crate) fn get_minting_contract_hash(
-    builder: &LmdbWasmTestBuilder,
-) -> ContractHash {
+pub(crate) fn get_minting_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {
     let minting_contract_hash = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
@@ -111,9 +120,7 @@ pub(crate) fn get_minting_contract_package_hash(
     ContractPackageHash::new(minting_contract_package_hash)
 }
 
-pub(crate) fn get_transfer_filter_contract_hash(
-    builder: &LmdbWasmTestBuilder,
-) -> ContractHash {
+pub(crate) fn get_transfer_filter_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {
     let transfer_filter_contract_hash = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
@@ -132,19 +139,35 @@ pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
     dictionary_name: &str,
     dictionary_key: &str,
 ) -> T {
-    let seed_uref = *builder
-        .query(None, *nft_contract_key, &[])
-        .expect("must have nft contract")
-        .as_contract()
-        .expect("must convert contract")
-        .named_keys()
-        .get(dictionary_name)
-        .expect("must have key")
-        .as_uref()
-        .expect("must convert to seed uref");
+    let named_key = match nft_contract_key.into_entity_hash() {
+        Some(hash) => *builder
+            .get_entity_with_named_keys_by_entity_hash(hash)
+            .expect("should be named key from entity hash")
+            .named_keys()
+            .get(dictionary_name)
+            .expect("must have key"),
+        None => match nft_contract_key.into_account() {
+            Some(account_hash) => *builder
+                .get_entity_with_named_keys_by_account_hash(account_hash)
+                .expect("should be named key from account hash")
+                .named_keys()
+                .get(dictionary_name)
+                .expect("must have key"),
+            None => *builder
+                .get_named_keys(EntityAddr::SmartContract(
+                    nft_contract_key
+                        .into_hash_addr()
+                        .expect("should be entity addr"),
+                ))
+                .get(dictionary_name)
+                .expect("must have key"),
+        },
+    };
+
+    let seed_uref = named_key.as_uref().expect("must convert to seed uref");
 
     builder
-        .query_dictionary_item(None, seed_uref, dictionary_key)
+        .query_dictionary_item(None, *seed_uref, dictionary_key)
         .expect("should have dictionary value")
         .as_cl_value()
         .expect("T should be CLValue")
@@ -159,7 +182,7 @@ pub(crate) fn assert_expected_invalid_installer_request(
     reason: &str,
 ) {
     let mut builder = genesis();
-
+    builder.exec(install_request_builder.build());
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(error, expected_error_code, reason);
 }
@@ -193,14 +216,14 @@ pub(crate) fn query_stored_value<T: CLTyped + FromBytes>(
     base_key: Key,
     path: Vec<String>,
 ) -> T {
-    builder
-        .query(None, base_key, &path)
+    let stored = builder.query(None, base_key, &path);
+    let cl_value = stored
         .expect("must have stored value")
         .as_cl_value()
         .cloned()
-        .expect("must have cl value")
-        .into_t::<T>()
-        .expect("must get value")
+        .expect("must have cl value");
+
+    cl_value.into_t::<T>().expect("must get value")
 }
 
 pub(crate) fn call_session_code_with_ret<T: CLTyped + FromBytes>(
@@ -336,9 +359,7 @@ pub fn get_event<T: FromBytes + CLTyped + Debug>(
     Ok(event)
 }
 
-pub(crate) fn get_nft_contract_hash_1_0_0(
-    builder: &LmdbWasmTestBuilder,
-) -> ContractHash {
+pub(crate) fn get_nft_contract_hash_1_0_0(builder: &LmdbWasmTestBuilder) -> ContractHash {
     let nft_hash_addr = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()

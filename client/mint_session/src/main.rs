@@ -8,7 +8,7 @@ extern crate alloc;
 
 use alloc::string::String;
 use casper_contract::{contract_api::runtime, ext_ffi};
-use casper_types::{api_error, runtime_args, ApiError, Key, URef, contracts::ContractHash};
+use casper_types::{api_error, contracts::ContractHash, runtime_args, ApiError, Key, URef};
 
 const ENTRY_POINT_MINT: &str = "mint";
 const ENTRY_POINT_REGISTER_OWNER: &str = "register_owner";

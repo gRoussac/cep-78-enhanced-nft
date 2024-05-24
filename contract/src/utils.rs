@@ -14,7 +14,12 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    account::AccountHash, api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::{ContractHash, ContractPackageHash}, system::Caller, ApiError, CLTyped, Key, URef
+    account::AccountHash,
+    api_error,
+    bytesrepr::{self, FromBytes, ToBytes},
+    contracts::{ContractHash, ContractPackageHash},
+    system::Caller,
+    ApiError, CLTyped, Key, URef,
 };
 
 use crate::{
@@ -284,7 +289,6 @@ pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     (ptr, size, bytes)
 }
 
-
 pub enum VerifiedCaller {
     Session(AccountHash),
     StoredCaller(ContractHash, ContractPackageHash),
@@ -298,9 +302,7 @@ pub fn get_verified_caller() -> Result<VerifiedCaller, NFTCoreError> {
         .to_owned()
         .unwrap_or_revert()
     {
-        Caller::Initiator {
-            account_hash,
-        } => {
+        Caller::Initiator { account_hash } => {
             if let NFTHolderMode::Contracts = holder_mode {
                 return Err(NFTCoreError::InvalidHolderMode);
             }
@@ -313,7 +315,10 @@ pub fn get_verified_caller() -> Result<VerifiedCaller, NFTCoreError> {
             if let NFTHolderMode::Accounts = holder_mode {
                 return Err(NFTCoreError::InvalidHolderMode);
             }
-            Ok(VerifiedCaller::StoredCaller(ContractHash::new(entity_hash.value()), ContractPackageHash::new(package_hash.value())))
+            Ok(VerifiedCaller::StoredCaller(
+                ContractHash::new(entity_hash.value()),
+                ContractPackageHash::new(package_hash.value()),
+            ))
         }
     }
 }
