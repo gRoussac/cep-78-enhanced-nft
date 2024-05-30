@@ -4,19 +4,20 @@ prepare:
 	rustup target add wasm32-unknown-unknown
 	rustup component add clippy --toolchain ${PINNED_TOOLCHAIN}
 	rustup component add rustfmt --toolchain ${PINNED_TOOLCHAIN}
+	rustup component add rust-src --toolchain ${PINNED_TOOLCHAIN}
 
 build-contract:
-	cd contract && cargo build --release --target wasm32-unknown-unknown
-	cd client/mint_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/balance_of_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/owner_of_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/get_approved_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/is_approved_for_all_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/transfer_session && cargo build --release --target wasm32-unknown-unknown
-	cd client/updated_receipts && cargo build --release --target wasm32-unknown-unknown
-	cd test-contracts/minting_contract && cargo build --release --target wasm32-unknown-unknown
-	cd test-contracts/mangle_named_keys && cargo build --release --target wasm32-unknown-unknown
-	cd test-contracts/transfer_filter_contract && cargo build --release --target wasm32-unknown-unknown
+	cd contract && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/mint_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/balance_of_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/owner_of_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/get_approved_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/is_approved_for_all_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/transfer_session && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd client/updated_receipts && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd test-contracts/minting_contract && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd test-contracts/mangle_named_keys && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
+	cd test-contracts/transfer_filter_contract && RUSTFLAGS="-C target-cpu=mvp" cargo build --release --target wasm32-unknown-unknown -Z build-std=std,panic_abort
 	wasm-strip contract/target/wasm32-unknown-unknown/release/contract.wasm
 	wasm-strip client/mint_session/target/wasm32-unknown-unknown/release/mint_call.wasm
 	wasm-strip client/balance_of_session/target/wasm32-unknown-unknown/release/balance_of_call.wasm
