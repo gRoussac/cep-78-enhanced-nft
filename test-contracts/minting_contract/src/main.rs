@@ -7,6 +7,7 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 extern crate alloc;
 
 use alloc::{
+    collections::BTreeMap,
     string::{String, ToString},
     vec,
 };
@@ -16,9 +17,11 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    api_error, contracts::NamedKeys, runtime_args, ApiError, CLType, ContractHash,
-    ContractPackageHash, ContractVersion, EntryPoint, EntryPointAccess, EntryPointType,
-    EntryPoints, Key, Parameter, RuntimeArgs, URef,
+    addressable_entity::{AddressableEntityHash, NamedKeys},
+    api_error,
+    contracts::{ContractHash, ContractVersion},
+    runtime_args, ApiError, CLType, EntryPoint, EntryPointAccess, EntryPointPayment,
+    EntryPointType, EntryPoints, Key, PackageHash, Parameter, URef,
 };
 
 const CONTRACT_NAME: &str = "minting_contract_hash";
@@ -49,7 +52,7 @@ const ARG_IS_HASH_IDENTIFIER_MODE: &str = "is_hash_identifier_mode";
 #[no_mangle]
 pub extern "C" fn mint() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
@@ -64,7 +67,7 @@ pub extern "C" fn mint() {
     }
     if reverse_lookup_enabled {
         runtime::call_contract::<(String, URef)>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_REGISTER_OWNER,
             runtime_args! {
                 ARG_TOKEN_OWNER => token_owner,
@@ -73,7 +76,7 @@ pub extern "C" fn mint() {
 
         let (collection_name, owned_tokens_dictionary_key, _token_id_string) =
             runtime::call_contract::<(String, Key, String)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_MINT,
                 runtime_args! {
                     ARG_TOKEN_HASH => token_hash,
@@ -85,7 +88,7 @@ pub extern "C" fn mint() {
         runtime::put_key(&collection_name, owned_tokens_dictionary_key)
     } else {
         runtime::call_contract::<()>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_MINT,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash,
@@ -99,7 +102,7 @@ pub extern "C" fn mint() {
 #[no_mangle]
 pub extern "C" fn approve() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
@@ -107,7 +110,7 @@ pub extern "C" fn approve() {
     let spender_key = runtime::get_named_arg::<Key>(ARG_SPENDER);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_APPROVE,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -119,14 +122,14 @@ pub extern "C" fn approve() {
 #[no_mangle]
 pub extern "C" fn revoke() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REVOKE,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -137,7 +140,7 @@ pub extern "C" fn revoke() {
 #[no_mangle]
 pub extern "C" fn transfer() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
@@ -146,7 +149,7 @@ pub extern "C" fn transfer() {
     let target_token_owner = runtime::get_named_arg::<Key>(ARG_TARGET_KEY);
 
     let (collection_name, owned_tokens_dictionary_key) = runtime::call_contract::<(String, Key)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_TRANSFER,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -161,14 +164,14 @@ pub extern "C" fn transfer() {
 #[no_mangle]
 pub extern "C" fn burn() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_BURN,
         runtime_args! {
             ARG_TOKEN_ID => token_id
@@ -179,14 +182,14 @@ pub extern "C" fn burn() {
 #[no_mangle]
 pub extern "C" fn metadata() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
     let metadata: String = if runtime::get_named_arg::<bool>(ARG_IS_HASH_IDENTIFIER_MODE) {
         let token_hash = runtime::get_named_arg::<String>(ARG_TOKEN_HASH);
         runtime::call_contract::<String>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_METADATA,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash
@@ -195,7 +198,7 @@ pub extern "C" fn metadata() {
     } else {
         let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
         runtime::call_contract::<String>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_METADATA,
             runtime_args! {
                 ARG_TOKEN_ID => token_id
@@ -208,14 +211,14 @@ pub extern "C" fn metadata() {
 #[no_mangle]
 pub extern "C" fn register_contract() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash()
+        .into_hash_addr()
         .map(ContractHash::new)
         .unwrap();
 
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
 
     runtime::call_contract::<(String, URef)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner
@@ -223,7 +226,7 @@ pub extern "C" fn register_contract() {
     );
 }
 
-fn install_minting_contract() -> (ContractHash, ContractVersion) {
+fn install_minting_contract() -> (AddressableEntityHash, ContractVersion) {
     let entry_points = get_entry_points();
     let named_keys = named_keys();
     storage::new_contract(
@@ -231,19 +234,26 @@ fn install_minting_contract() -> (ContractHash, ContractVersion) {
         Some(named_keys),
         Some(PACKAGE_HASH_KEY_NAME.to_string()),
         Some(ACCESS_KEY_NAME.to_string()),
+        None,
     )
 }
 
-fn upgrade_minting_contract(name: &str) -> (ContractHash, ContractVersion) {
-    let contract_package_hash: ContractPackageHash = ContractPackageHash::new(
+fn upgrade_minting_contract(name: &str) -> (AddressableEntityHash, ContractVersion) {
+    let contract_package_hash: PackageHash = PackageHash::new(
         runtime::get_key(name)
             .unwrap_or_revert()
-            .into_hash()
-            .unwrap_or_revert(),
+            .into_package_hash()
+            .unwrap_or_revert()
+            .value(),
     );
     let named_keys = named_keys();
     let entry_points = get_entry_points();
-    storage::add_contract_version(contract_package_hash, entry_points, named_keys)
+    storage::add_contract_version(
+        contract_package_hash,
+        entry_points,
+        named_keys,
+        BTreeMap::new(),
+    )
 }
 
 fn named_keys() -> NamedKeys {
@@ -262,7 +272,8 @@ fn get_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Session,
+        EntryPointType::Caller,
+        EntryPointPayment::Caller,
     );
 
     let approve_entry_point = EntryPoint::new(
@@ -270,7 +281,8 @@ fn get_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_SPENDER, CLType::Key)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     let revoke_entry_point = EntryPoint::new(
@@ -278,7 +290,8 @@ fn get_entry_points() -> EntryPoints {
         vec![],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     let transfer_entry_point = EntryPoint::new(
@@ -290,7 +303,8 @@ fn get_entry_points() -> EntryPoints {
         ],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     let burn_entry_point = EntryPoint::new(
@@ -298,7 +312,8 @@ fn get_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_TOKEN_ID, CLType::U64)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     let metadata_entry_point = EntryPoint::new(
@@ -306,7 +321,8 @@ fn get_entry_points() -> EntryPoints {
         vec![Parameter::new(ARG_TOKEN_ID, CLType::U64)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Contract,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(mint_entry_point);
@@ -327,7 +343,7 @@ pub extern "C" fn call() {
         install_minting_contract()
     };
 
-    runtime::put_key(CONTRACT_NAME, contract_hash.into());
+    runtime::put_key(CONTRACT_NAME, Key::Hash(contract_hash.value()));
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }
 

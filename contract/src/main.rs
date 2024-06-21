@@ -31,8 +31,8 @@ use casper_contract::{
 use casper_types::{
     addressable_entity::NamedKeys,
     contracts::{ContractHash, ContractPackageHash},
-    runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Key,
-    KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged,
+    runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType,
+    EntryPoints, Key, KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged,
 };
 use constants::{
     ACCESS_KEY_NAME_1_0_0, ACL_PACKAGE_MODE, ACL_WHITELIST, ALLOW_MINTING, APPROVED,
@@ -2260,6 +2260,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint exposes all variables that can be changed by managing account post
@@ -2288,6 +2289,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint mints a new token with provided metadata.
@@ -2317,6 +2319,7 @@ fn generate_entry_points() -> EntryPoints {
         ]),
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint burns the token with provided token_id argument, after which it is no
@@ -2331,6 +2334,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint transfers ownership of token from one account to another.
@@ -2346,6 +2350,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Tuple2([Box::new(CLType::String), Box::new(CLType::Key)]),
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint approves another token holder (an approved account) to transfer tokens. It
@@ -2357,6 +2362,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint revokes an approved account to transfer tokens. It reverts
@@ -2368,6 +2374,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint approves all tokens owned by the caller and future to another token holder
@@ -2382,6 +2389,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint returns if an account is operator for a token owner
@@ -2394,6 +2402,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Bool,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint returns the token owner given a token_id. It reverts if token_id
@@ -2404,6 +2413,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Key,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint returns the approved account (if any) associated with the provided token_id
@@ -2414,6 +2424,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Option(Box::new(CLType::Key)),
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint returns number of owned tokens associated with the provided token holder
@@ -2423,6 +2434,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::U64,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint returns the metadata associated with the provided token_id
@@ -2432,6 +2444,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::String,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint updates the metadata if valid.
@@ -2441,6 +2454,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint will upgrade the contract from the 1_0 version to the
@@ -2460,6 +2474,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint will allow NFT owners to update their receipts from
@@ -2475,6 +2490,7 @@ fn generate_entry_points() -> EntryPoints {
         ]))),
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     // This entrypoint allows users to register with a give CEP-78 instance,
@@ -2489,6 +2505,7 @@ fn generate_entry_points() -> EntryPoints {
         CLType::Tuple2([Box::new(CLType::String), Box::new(CLType::URef)]),
         EntryPointAccess::Public,
         EntryPointType::Called,
+        EntryPointPayment::Caller,
     );
 
     entry_points.add_entry_point(init_contract);
