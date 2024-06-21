@@ -248,7 +248,7 @@ pub(crate) fn validate_metadata(
                     .map_err(|_| NFTCoreError::FailedToParseCustomMetadata)?;
 
             for (property_name, property_type) in token_schema.properties.iter() {
-                if property_type.required && custom_metadata.attributes.get(property_name).is_none()
+                if property_type.required && !custom_metadata.attributes.contains_key(property_name)
                 {
                     runtime::revert(NFTCoreError::InvalidCustomMetadata)
                 }
