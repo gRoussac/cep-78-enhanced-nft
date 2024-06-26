@@ -1,6 +1,4 @@
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 
 use casper_types::{account::AccountHash, contracts::ContractHash, runtime_args, CLValue, Key};
 use contract::{
@@ -19,7 +17,12 @@ use contract::{
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_1_1_0_WASM, CONTRACT_1_2_0_WASM, CONTRACT_1_3_0_WASM, CONTRACT_1_4_0_WASM, CONTRACT_1_5_0_WASM, MANGLE_NAMED_KEYS, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, PAGE_SIZE, TRANSFER_SESSION_WASM, UPDATED_RECEIPTS_WASM
+        ACCOUNT_1_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH,
+        ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_1_1_0_WASM,
+        CONTRACT_1_2_0_WASM, CONTRACT_1_3_0_WASM, CONTRACT_1_4_0_WASM, CONTRACT_1_5_0_WASM,
+        MANGLE_NAMED_KEYS, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM,
+        NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, PAGE_SIZE, TRANSFER_SESSION_WASM,
+        UPDATED_RECEIPTS_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, NFTIdentifierMode, NFTMetadataKind,

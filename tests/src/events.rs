@@ -1,8 +1,6 @@
 use std::collections::BTreeMap;
 
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_event_standard::EVENTS_DICT;
 use casper_types::{account::AccountHash, runtime_args, Key};
 
@@ -21,7 +19,12 @@ use contract::{
 
 use crate::utility::{
     constants::{
-        ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME, ARG_NFT_CONTRACT_HASH, ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_NAME, IS_APPROVED_FOR_ALL_WASM, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA, TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_721_META_DATA, TEST_PRETTY_UPDATED_CEP78_METADATA, TRANSFER_SESSION_WASM
+        ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME, ARG_NFT_CONTRACT_HASH,
+        ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_NAME,
+        IS_APPROVED_FOR_ALL_WASM, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM,
+        NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
+        TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_721_META_DATA,
+        TEST_PRETTY_UPDATED_CEP78_METADATA, TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, NFTIdentifierMode, NFTMetadataKind,
@@ -29,7 +32,8 @@ use crate::utility::{
         TEST_CUSTOM_UPDATED_METADATA,
     },
     support::{
-        self, call_session_code_with_ret, genesis, get_dictionary_value_from_key, get_nft_contract_hash, get_token_page_by_id, query_stored_value
+        self, call_session_code_with_ret, genesis, get_dictionary_value_from_key,
+        get_nft_contract_hash, get_token_page_by_id, query_stored_value,
     },
 };
 

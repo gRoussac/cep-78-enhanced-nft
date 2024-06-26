@@ -1,5 +1,5 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
-// use casper_event_standard::Schemas;
+use casper_event_standard::Schemas;
 use casper_types::{contracts::ContractHash, runtime_args, CLValue, Key};
 use contract::{
     constants::{
@@ -7,10 +7,10 @@ use contract::{
         ARG_HOLDER_MODE, ARG_MINTING_MODE, ARG_TOTAL_TOKEN_SUPPLY, ARG_WHITELIST_MODE,
         ENTRY_POINT_INIT, NUMBER_OF_MINTED_TOKENS,
     },
-    // events::events_ces::{
-    //     Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
-    //     Transfer, VariablesSet,
-    // },
+    events::events_ces::{
+        Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
+        Transfer, VariablesSet,
+    },
 };
 
 use crate::utility::{
@@ -106,22 +106,22 @@ fn should_install_contract() {
     );
 
     // Expects Schemas to be registerd.
-    // let expected_schemas = Schemas::new()
-    //     .with::<Mint>()
-    //     .with::<Burn>()
-    //     .with::<Approval>()
-    //     .with::<ApprovalRevoked>()
-    //     .with::<ApprovalForAll>()
-    //     .with::<Transfer>()
-    //     .with::<MetadataUpdated>()
-    //     .with::<VariablesSet>()
-    //     .with::<Migration>();
-    // let actual_schemas: Schemas = support::query_stored_value(
-    //     &builder,
-    //     nft_contract_key,
-    //     vec![casper_event_standard::EVENTS_SCHEMA.to_string()],
-    // );
-    // assert_eq!(actual_schemas, expected_schemas, "Schemas mismatch.");
+    let expected_schemas = Schemas::new()
+        .with::<Mint>()
+        .with::<Burn>()
+        .with::<Approval>()
+        .with::<ApprovalRevoked>()
+        .with::<ApprovalForAll>()
+        .with::<Transfer>()
+        .with::<MetadataUpdated>()
+        .with::<VariablesSet>()
+        .with::<Migration>();
+    let actual_schemas: Schemas = support::query_stored_value(
+        &builder,
+        nft_contract_key,
+        vec![casper_event_standard::EVENTS_SCHEMA.to_string()],
+    );
+    assert_eq!(actual_schemas, expected_schemas, "Schemas mismatch.");
 }
 
 #[test]

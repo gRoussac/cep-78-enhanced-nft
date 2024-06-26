@@ -109,3 +109,17 @@ clean:
 	cd test-contracts/transfer_filter_contract && cargo clean
 	cd tests && cargo clean
 	rm -rf tests/wasm
+	rm -rf ./*/Cargo.lock
+
+cargo-update:
+	cd contract && cargo update
+	cd client/mint_session && cargo update
+	cd client/balance_of_session && cargo update
+	cd client/owner_of_session && cargo update
+	cd client/get_approved_session && cargo update
+	cd client/transfer_session && cargo update
+	cd client/updated_receipts && cargo update
+	cd test-contracts/minting_contract && cargo update
+	cd test-contracts/mangle_named_keys && cargo update
+	cd test-contracts/transfer_filter_contract && cargo update
+	cd tests && cargo update

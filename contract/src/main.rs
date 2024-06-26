@@ -63,7 +63,13 @@ use constants::{
 };
 use core::convert::{TryFrom, TryInto};
 use error::NFTCoreError;
-use events::events_cep47::{record_cep47_event_dictionary, CEP47Event};
+use events::{
+    events_cep47::{record_cep47_event_dictionary, CEP47Event},
+    events_ces::{
+        Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
+        RevokedForAll, Transfer, VariablesSet,
+    },
+};
 use metadata::CustomMetadataSchema;
 use modalities::{
     BurnMode, EventsMode, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
@@ -407,9 +413,9 @@ pub extern "C" fn init() {
     .unwrap_or_revert();
 
     // Initialize events structures for CES.
-    // if let EventsMode::CES = events_mode {
-    //     utils::init_events();
-    // }
+    if let EventsMode::CES = events_mode {
+        utils::init_events();
+    }
     runtime::put_key(EVENTS_MODE, storage::new_uref(events_mode as u8).into());
 
     // Initialize contract with variables which must be present but maybe set to
@@ -605,7 +611,7 @@ pub extern "C" fn set_variables() {
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::VariablesSet),
-        EventsMode::CES => (), //casper_event_standard::emit(VariablesSet::new()),
+        EventsMode::CES => casper_event_standard::emit(VariablesSet::new()),
     }
 }
 
@@ -829,11 +835,11 @@ pub extern "C" fn mint() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {} //casper_event_standard::emit(Mint::new(
-        //     token_owner_key,
-        //     token_identifier.clone(),
-        //     token_metadata,
-        // )),
+        EventsMode::CES => casper_event_standard::emit(Mint::new(
+            token_owner_key,
+            token_identifier.clone(),
+            token_metadata,
+        )),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Mint {
             recipient: token_owner_key,
             token_id: token_identifier.clone(),
@@ -981,9 +987,9 @@ pub extern "C" fn burn() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {}
-        //     casper_event_standard::emit(Burn::new(token_owner, token_identifier, caller))
-        // }
+        EventsMode::CES => {
+            casper_event_standard::emit(Burn::new(token_owner, token_identifier, caller))
+        }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Burn {
             owner: token_owner,
             token_id: token_identifier,
@@ -1119,8 +1125,7 @@ pub extern "C" fn approve() {
     // Emit Approval event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {} /* casper_event_standard::emit(Approval::new(owner, spender,
-                                * token_id)), */
+        EventsMode::CES => casper_event_standard::emit(Approval::new(owner, spender, token_id)),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::ApprovalGranted {
             owner,
             spender,
@@ -1238,8 +1243,7 @@ pub extern "C" fn revoke() {
     // Emit ApprovalRevoked event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {} //casper_event_standard::emit(ApprovalRevoked::new(owner,
-        // token_id)),
+        EventsMode::CES => casper_event_standard::emit(ApprovalRevoked::new(owner, token_id)),
         EventsMode::CEP47 => {
             record_cep47_event_dictionary(CEP47Event::ApprovalRevoked { owner, token_id })
         }
@@ -1297,13 +1301,13 @@ pub extern "C" fn set_approval_for_all() {
 
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {}
-        //     if approve_all {
-        //         casper_event_standard::emit(ApprovalForAll::new(caller, operator));
-        //     } else {
-        //         casper_event_standard::emit(RevokedForAll::new(caller, operator));
-        //     }
-        // }
+        EventsMode::CES => {
+            if approve_all {
+                casper_event_standard::emit(ApprovalForAll::new(caller, operator));
+            } else {
+                casper_event_standard::emit(RevokedForAll::new(caller, operator));
+            }
+        }
         EventsMode::CEP47 => {
             if approve_all {
                 record_cep47_event_dictionary(CEP47Event::ApprovalForAll {
@@ -1577,16 +1581,16 @@ pub extern "C" fn transfer() {
             recipient: target_owner_key,
             token_id: token_identifier.clone(),
         }),
-        EventsMode::CES => {} /*     // Emit Transfer event.
-                               *     let spender = if caller == owner { None } else {
-                               * Some(caller) };
-                               *     casper_event_standard::emit(Transfer::new(
-                               *         owner,
-                               *         spender,
-                               *         target_owner_key,
-                               *         token_identifier.clone(),
-                               *     ));
-                               * } */
+        EventsMode::CES => {
+            // Emit Transfer event.
+            let spender = if caller == owner { None } else { Some(caller) };
+            casper_event_standard::emit(Transfer::new(
+                owner,
+                spender,
+                target_owner_key,
+                token_identifier.clone(),
+            ));
+        }
     }
 
     let reporting_mode = utils::get_reporting_mode();
@@ -1861,12 +1865,12 @@ pub extern "C" fn set_token_metadata() {
     // Emit MetadataUpdate event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => {}
-        //     casper_event_standard::emit(MetadataUpdated::new(
-        //         token_identifier,
-        //         updated_token_metadata,
-        //     ));
-        // }
+        EventsMode::CES => {
+            casper_event_standard::emit(MetadataUpdated::new(
+                token_identifier,
+                updated_token_metadata,
+            ));
+        }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::MetadataUpdate {
             token_id: token_identifier,
         }),
@@ -2024,12 +2028,12 @@ pub extern "C" fn migrate() {
             .try_into()
             .unwrap_or_revert_with(NFTCoreError::InvalidEventsMode);
         match (current_events_mode, requested_events_mode) {
-            // (EventsMode::CES, EventsMode::CES) => casper_event_standard::emit(Migration::new()),
-            // (_, EventsMode::CES) => {
-            //     // Initialize events structures.
-            //     utils::init_events();
-            //     casper_event_standard::emit(Migration::new());
-            // }
+            (EventsMode::CES, EventsMode::CES) => casper_event_standard::emit(Migration::new()),
+            (_, EventsMode::CES) => {
+                // Initialize events structures.
+                utils::init_events();
+                casper_event_standard::emit(Migration::new());
+            }
             (_, EventsMode::CEP47) => record_cep47_event_dictionary(CEP47Event::Migrate),
             (_, _) => {}
         }
@@ -2037,7 +2041,7 @@ pub extern "C" fn migrate() {
     } else {
         match current_events_mode {
             EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Migrate),
-            // EventsMode::CES => casper_event_standard::emit(Migration::new()),
+            EventsMode::CES => casper_event_standard::emit(Migration::new()),
             _ => {
                 // Store "no events" mode in case it was never stored like version < 1.2
                 if !runtime::has_key(EVENTS_MODE) {

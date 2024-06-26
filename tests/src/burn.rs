@@ -21,8 +21,8 @@ use contract::{
         ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, BURNT_TOKENS, BURN_MODE, ENTRY_POINT_BURN,
         ENTRY_POINT_MINT, ENTRY_POINT_SET_APPROVALL_FOR_ALL, TOKEN_COUNT,
     },
-    // events::events_ces::Burn,
-    // modalities::TokenIdentifier,
+    events::events_ces::Burn,
+    modalities::TokenIdentifier,
 };
 
 fn should_burn_minted_token(reporting: OwnerReverseLookupMode) {
@@ -553,13 +553,13 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
 
     // Expect Burn event. Mint is first event, burn is second event.
     let actual_event_index = 2;
-    // let actual_event: Burn =
-    //     support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
+    let actual_event: Burn =
+        support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
     let burner = Key::from(operator); // Burner is operator account
 
-    // let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
-    // assert_eq!(actual_event, expected_event, "Expected Burn event.");
+    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
 #[test]
@@ -677,13 +677,13 @@ fn should_let_contract_operator_burn_tokens_with_operator_burn_mode() {
 
     // Expect Burn event. Mint is first event, burn is second event.
     let actual_event_index = 2;
-    // let actual_event: Burn =
-    //     support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
+    let actual_event: Burn =
+        support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
     let burner = Key::from(minting_contract_hash); // Burner is contract not session caller ACCOUNT_USER_1
 
-    // let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
-    // assert_eq!(actual_event, expected_event, "Expected Burn event.");
+    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
 #[test]
@@ -803,13 +803,13 @@ fn should_let_package_operator_burn_tokens_with_contract_package_mode_and_operat
 
     // Expect Burn event. Mint is first event, burn is second event.
     let actual_event_index = 2;
-    // let actual_event: Burn =
-    //     support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
+    let actual_event: Burn =
+        support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
     let burner = Key::from(minting_contract_hash); // Burner is contract not its package nor session caller ACCOUNT_USER_1
 
-    // let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
-    // assert_eq!(actual_event, expected_event, "Expected Burn event.");
+    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
 #[test]

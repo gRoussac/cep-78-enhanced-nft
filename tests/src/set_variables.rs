@@ -7,7 +7,7 @@ use contract::{
         OPERATOR_BURN_MODE, PACKAGE_OPERATOR_MODE,
     },
     error::NFTCoreError,
-    // events::events_ces::VariablesSet,
+    events::events_ces::VariablesSet,
 };
 
 use crate::utility::{
@@ -87,9 +87,9 @@ fn only_installer_should_be_able_to_toggle_allow_minting() {
     assert!(allow_minting);
 
     // Expect VariablesSet event.
-    // let expected_event = VariablesSet::new();
-    // let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
-    // assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
+    let expected_event = VariablesSet::new();
+    let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
+    assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
 }
 
 #[test]
@@ -149,9 +149,9 @@ fn installer_should_be_able_to_toggle_acl_package_mode() {
     assert!(is_acl_packge_mode);
 
     // Expect VariablesSet event.
-    // let expected_event = VariablesSet::new();
-    // let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
-    // assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
+    let expected_event = VariablesSet::new();
+    let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
+    assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
 }
 
 #[test]
@@ -211,9 +211,9 @@ fn installer_should_be_able_to_toggle_package_operator_mode() {
     assert!(is_package_operator_mode);
 
     // Expect VariablesSet event.
-    // let expected_event = VariablesSet::new();
-    // let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
-    // assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
+    let expected_event = VariablesSet::new();
+    let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
+    assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
 }
 
 #[test]
@@ -273,7 +273,7 @@ fn installer_should_be_able_to_toggle_operator_burn_mode() {
     assert!(is_package_operator_mode);
 
     // Expect VariablesSet event.
-    // let expected_event = VariablesSet::new();
-    // let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
-    // assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
+    let expected_event = VariablesSet::new();
+    let actual_event: VariablesSet = support::get_event(&builder, &nft_contract_key, 0).unwrap();
+    assert_eq!(actual_event, expected_event, "Expected VariablesSet event.");
 }

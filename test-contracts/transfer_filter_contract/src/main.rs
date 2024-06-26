@@ -13,10 +13,10 @@ use casper_contract::contract_api::{
     storage,
 };
 use casper_types::{
-    addressable_entity::{AddressableEntityHash, NamedKeys},
+    addressable_entity::{EntityKindTag, NamedKeys},
     contracts::ContractVersion,
-    CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType, EntryPoints,
-    Key, Parameter,
+    AddressableEntityHash, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment,
+    EntryPointType, EntryPoints, Key, Parameter,
 };
 
 const CONTRACT_NAME: &str = "transfer_filter_contract_hash";
@@ -34,7 +34,7 @@ fn install_filter_contract() -> (AddressableEntityHash, ContractVersion) {
         ],
         CLType::U8,
         EntryPointAccess::Public,
-        EntryPointType::Caller,
+        EntryPointType::Called,
         EntryPointPayment::Caller,
     );
 
@@ -43,7 +43,7 @@ fn install_filter_contract() -> (AddressableEntityHash, ContractVersion) {
         vec![Parameter::new(ARG_FILTER_CONTRACT_RETURN_VALUE, CLType::U8)],
         CLType::Unit,
         EntryPointAccess::Public,
-        EntryPointType::Caller,
+        EntryPointType::Called,
         EntryPointPayment::Caller,
     );
 
@@ -95,6 +95,9 @@ pub extern "C" fn can_transfer() {
 pub extern "C" fn call() {
     let (contract_hash, contract_version) = install_filter_contract();
 
-    runtime::put_key(CONTRACT_NAME, Key::Hash(contract_hash.value()));
+    runtime::put_key(
+        CONTRACT_NAME,
+        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
+    );
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }

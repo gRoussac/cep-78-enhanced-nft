@@ -5,7 +5,7 @@ use alloc::{
     vec,
     vec::Vec,
 };
-// use casper_event_standard::Schemas;
+use casper_event_standard::Schemas;
 use core::{convert::TryInto, mem::MaybeUninit};
 
 use casper_contract::{
@@ -31,10 +31,10 @@ use crate::{
         TRANSFER_FILTER_CONTRACT, UNMATCHED_HASH_COUNT,
     },
     error::NFTCoreError,
-    // events::events_ces::{
-    //     Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
-    //     Transfer, VariablesSet,
-    // },
+    events::events_ces::{
+        Approval, ApprovalForAll, ApprovalRevoked, Burn, MetadataUpdated, Migration, Mint,
+        Transfer, VariablesSet,
+    },
     modalities::{
         BurnMode, MetadataRequirement, MintingMode, NFTHolderMode, NFTIdentifierMode,
         NFTMetadataKind, OwnerReverseLookupMode, OwnershipMode, Requirement, TokenIdentifier,
@@ -802,20 +802,20 @@ pub fn create_metadata_requirements(
     metadata_requirements
 }
 
-// // Initializes events-releated named keys and records all event schemas.
-// pub fn init_events() {
-//     let schemas = Schemas::new()
-//         .with::<Mint>()
-//         .with::<Burn>()
-//         .with::<Approval>()
-//         .with::<ApprovalRevoked>()
-//         .with::<ApprovalForAll>()
-//         .with::<Transfer>()
-//         .with::<MetadataUpdated>()
-//         .with::<VariablesSet>()
-//         .with::<Migration>();
-//     casper_event_standard::init(schemas);
-// }
+// Initializes events-releated named keys and records all event schemas.
+pub fn init_events() {
+    let schemas = Schemas::new()
+        .with::<Mint>()
+        .with::<Burn>()
+        .with::<Approval>()
+        .with::<ApprovalRevoked>()
+        .with::<ApprovalForAll>()
+        .with::<Transfer>()
+        .with::<MetadataUpdated>()
+        .with::<VariablesSet>()
+        .with::<Migration>();
+    casper_event_standard::init(schemas);
+}
 
 pub fn requires_rlo_migration() -> bool {
     match runtime::get_key(MIGRATION_FLAG) {

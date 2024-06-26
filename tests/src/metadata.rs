@@ -8,7 +8,7 @@ use contract::{
         ARG_TOKEN_OWNER, ENTRY_POINT_METADATA, ENTRY_POINT_MINT, ENTRY_POINT_SET_TOKEN_METADATA,
         METADATA_CEP78, METADATA_CUSTOM_VALIDATED, METADATA_NFT721, METADATA_RAW, TOKEN_OWNERS,
     },
-    // events::events_ces::MetadataUpdated,
+    events::events_ces::MetadataUpdated,
     modalities::TokenIdentifier,
 };
 
@@ -351,12 +351,12 @@ fn should_allow_update_for_valid_metadata_based_on_kind(
         NFTIdentifierMode::Ordinal => TokenIdentifier::Index(0),
         NFTIdentifierMode::Hash => TokenIdentifier::Hash(token_hash),
     };
-    // let expected_event = MetadataUpdated::new(token_id, updated_metadata.to_string());
-    // let actual_event: MetadataUpdated = support::get_event(&builder, &nft_contract_key, 1).unwrap();
-    // assert_eq!(
-    //     actual_event, expected_event,
-    //     "Expected MetadataUpdated event."
-    // );
+    let expected_event = MetadataUpdated::new(token_id, updated_metadata.to_string());
+    let actual_event: MetadataUpdated = support::get_event(&builder, &nft_contract_key, 1).unwrap();
+    assert_eq!(
+        actual_event, expected_event,
+        "Expected MetadataUpdated event."
+    );
 }
 
 #[test]
