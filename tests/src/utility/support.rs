@@ -134,14 +134,12 @@ pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
     dictionary_name: &str,
     dictionary_key: &str,
 ) -> T {
-    println!("{nft_contract_key:?}|{dictionary_name:?}|{dictionary_key:?}");
     let named_key = match nft_contract_key.into_entity_hash() {
         Some(hash) => {
             let entity_with_named_keys = builder
                 .get_entity_with_named_keys_by_entity_hash(hash)
                 .expect("should be named key from entity hash");
             let named_keys = entity_with_named_keys.named_keys();
-            println!("{named_keys:?}");
             named_keys
                 .get(dictionary_name)
                 .expect("must have key")
@@ -153,7 +151,6 @@ pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
                     .get_entity_with_named_keys_by_account_hash(account_hash)
                     .expect("should be named key from account hash");
                 let named_keys = entity_with_named_keys.named_keys();
-                println!("{named_keys:?}");
                 named_keys
                     .get(dictionary_name)
                     .expect("must have key")
@@ -165,7 +162,6 @@ pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
                         .into_hash_addr()
                         .expect("should be entity addr"),
                 ));
-                println!("{named_keys:?}");
                 named_keys
                     .get(dictionary_name)
                     .expect("must have key")
@@ -294,6 +290,13 @@ fn make_page_dictionary_item_key(token_owner_key: &Key) -> String {
     match token_owner_key {
         Key::Account(token_owner_account_hash) => token_owner_account_hash.to_string(),
         Key::Hash(token_owner_hash_addr) => ContractHash::new(*token_owner_hash_addr).to_string(),
+        Key::AddressableEntity(token_owner_entity_addr) => {
+            match token_owner_entity_addr{
+                EntityAddr::System(_) => panic!("invalid key type"),
+                EntityAddr::Account(hash_addr) => AddressableEntityHash::new(*hash_addr),
+                EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(*hash_addr),
+            }.to_string()},
+        Key::Package(token_owner_package_addr) => PackageHash::new(*token_owner_package_addr).to_string(),
         _ => panic!("invalid key type"),
     }
 }

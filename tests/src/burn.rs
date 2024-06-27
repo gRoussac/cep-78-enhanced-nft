@@ -1,8 +1,6 @@
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_NAME,
-        DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_WASM, MINT_SESSION_WASM,
-        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, TEST_PRETTY_721_META_DATA,
+        ACCOUNT_1_ADDR, ACCOUNT_1_ADDRESSABLE_ENTITY_KEY, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_NAME, DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, TEST_PRETTY_721_META_DATA
     },
     installer_request_builder::{
         BurnMode, InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode,
@@ -491,6 +489,7 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
 
     let token_id = 0u64;
     let operator = ACCOUNT_1_ADDR.to_owned();
+    let operator_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
 
     let burn_request = ExecuteRequestBuilder::contract_call_by_hash(
         operator,
@@ -517,7 +516,7 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::Account(operator)
+            ARG_OPERATOR => operator_key
         },
     )
     .build();
@@ -559,7 +558,7 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
     let actual_event: Burn =
         support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
-    let burner = Key::from(operator); // Burner is operator account
+    let burner = operator_key; // Burner is operator account
 
     let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");
@@ -641,7 +640,7 @@ fn should_let_contract_operator_burn_tokens_with_operator_burn_mode() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(operator)
+            ARG_OPERATOR => Key::addressable_entity_key(EntityKindTag::SmartContract, operator.into())
         },
     )
     .build();
@@ -684,7 +683,7 @@ fn should_let_contract_operator_burn_tokens_with_operator_burn_mode() {
     let actual_event: Burn =
         support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
-    let burner = Key::from(minting_contract_hash); // Burner is contract not session caller ACCOUNT_USER_1
+    let burner = Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into()); // Burner is contract not session caller ACCOUNT_USER_1
 
     let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");
@@ -811,7 +810,7 @@ fn should_let_package_operator_burn_tokens_with_contract_package_mode_and_operat
     let actual_event: Burn =
         support::get_event(&builder, &nft_contract_key, actual_event_index).unwrap();
 
-    let burner = Key::from(minting_contract_hash); // Burner is contract not its package nor session caller ACCOUNT_USER_1
+    let burner = Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into()); // Burner is contract not its package nor session caller ACCOUNT_USER_1
 
     let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");

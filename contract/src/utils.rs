@@ -9,12 +9,16 @@ use casper_event_standard::Schemas;
 use core::{convert::TryInto, mem::MaybeUninit};
 
 use casper_contract::{
-    contract_api::{self, account, runtime::{self, revert}, storage},
+    contract_api::{
+        self,
+        runtime::{self, revert},
+        storage,
+    },
     ext_ffi,
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    account::AccountHash, api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::{ContractHash, ContractPackageHash}, system::Caller, ApiError, CLTyped, Key, PackageHash, URef
+    api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::ContractHash, system::Caller, AddressableEntityHash, ApiError, CLTyped, Key, PackageHash, URef
 };
 
 use crate::{
@@ -80,7 +84,13 @@ pub fn encode_dictionary_item_key(key: Key) -> String {
     match key {
         Key::Account(account_hash) => account_hash.to_string(),
         Key::Hash(hash_addr) => ContractHash::new(hash_addr).to_string(),
-        Key::AddressableEntity(entity) => entity.to_string(),
+        Key::AddressableEntity(entity) => {
+            match entity {
+                casper_types::EntityAddr::System(_) => runtime::revert(NFTCoreError::InvalidKey),
+                casper_types::EntityAddr::Account(hash_addr) => AddressableEntityHash::new(hash_addr),
+                casper_types::EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(hash_addr),
+            }.to_string()
+        },
         Key::Package(package) => PackageHash::from(package).to_string(),
         Key::URef(_) => revert(ApiError::User(2001)),
         Key::Transfer(_) => revert(ApiError::User(2002)),
@@ -201,9 +211,9 @@ pub fn get_named_arg_with_user_errors<T: FromBytes>(
     bytesrepr::deserialize(arg_bytes).map_err(|_| invalid)
 }
 
-pub fn get_account_hash(name: &str, missing: NFTCoreError, invalid: NFTCoreError) -> AccountHash {
+pub fn get_account_entity_hash(name: &str, missing: NFTCoreError, invalid: NFTCoreError) -> AddressableEntityHash {
     let key = get_key_with_user_errors(name, missing, invalid);
-    key.into_account()
+    key.into_entity_hash()
         .unwrap_or_revert_with(NFTCoreError::UnexpectedKeyVariant)
 }
 
