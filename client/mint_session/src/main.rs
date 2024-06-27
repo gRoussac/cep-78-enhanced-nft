@@ -7,8 +7,8 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 extern crate alloc;
 
 use alloc::string::String;
-use casper_contract::{contract_api::runtime, ext_ffi};
-use casper_types::{api_error, contracts::ContractHash, runtime_args, ApiError, Key, URef};
+use casper_contract::{contract_api::runtime, ext_ffi, unwrap_or_revert::UnwrapOrRevert};
+use casper_types::{api_error, runtime_args, ApiError, Key, URef, AddressableEntityHash};
 
 const ENTRY_POINT_MINT: &str = "mint";
 const ENTRY_POINT_REGISTER_OWNER: &str = "register_owner";
@@ -20,10 +20,9 @@ const ARG_TOKEN_HASH: &str = "token_hash";
 
 #[no_mangle]
 pub extern "C" fn call() {
-    let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash_addr()
-        .map(ContractHash::new)
-        .unwrap();
+    let nft_contract_hash: AddressableEntityHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
+        .into_entity_hash()
+        .unwrap_or_revert();
 
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
     let token_metadata: String = runtime::get_named_arg(ARG_TOKEN_META_DATA);
@@ -35,7 +34,7 @@ pub extern "C" fn call() {
     }
 
     let (register_name, package_uref) = runtime::call_contract::<(String, URef)>(
-        nft_contract_hash.into(),
+        nft_contract_hash,
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner
@@ -45,7 +44,7 @@ pub extern "C" fn call() {
 
     let (receipt_name, owned_tokens_dictionary_key, _token_id_string) =
         runtime::call_contract::<(String, Key, String)>(
-            nft_contract_hash.into(),
+            nft_contract_hash,
             ENTRY_POINT_MINT,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash,

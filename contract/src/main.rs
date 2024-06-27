@@ -29,7 +29,7 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    addressable_entity::NamedKeys,
+    addressable_entity::{EntityKindTag, NamedKeys},
     contracts::{ContractHash, ContractPackageHash},
     runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType,
     EntryPoints, Key, KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged,
@@ -2776,7 +2776,7 @@ fn install_contract() {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::Hash(contract_hash.value()),
+        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
@@ -2868,7 +2868,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::Hash(contract_hash.value()),
+        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),

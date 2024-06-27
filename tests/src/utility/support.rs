@@ -21,11 +21,7 @@ use casper_engine_test_support::{
 use casper_execution_engine::{engine_state::Error as EngineStateError, execution::ExecError};
 
 use casper_types::{
-    account::AccountHash,
-    bytesrepr::{Bytes, FromBytes},
-    contracts::{ContractHash, ContractPackageHash},
-    AddressableEntity, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes,
-    RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512,
+    account::AccountHash, addressable_entity::EntityKindTag, bytesrepr::{Bytes, FromBytes}, contracts::{ContractHash, ContractPackageHash}, AddressableEntityHash, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes, PackageHash, RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512
 };
 use contract::constants::{HASH_KEY_NAME_1_0_0, INDEX_BY_HASH, PREFIX_PAGE_DICTIONARY};
 use rand::prelude::*;
@@ -60,23 +56,21 @@ pub(crate) fn genesis() -> LmdbWasmTestBuilder {
     builder
 }
 
-pub(crate) fn get_nft_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {
+pub(crate) fn get_nft_contract_hash(builder: &LmdbWasmTestBuilder) -> AddressableEntityHash {
     let account = builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap();
     let named_keys = account.named_keys();
 
-    let nft_hash_addr = named_keys
+    named_keys
         .get(CONTRACT_NAME)
         .expect("must have this entry in named keys")
-        .into_hash_addr()
-        .expect("must get hash_addr");
-
-    ContractHash::new(nft_hash_addr)
+        .into_entity_hash()
+        .expect("must get entity_hash")
 }
 
-pub(crate) fn contract_hash_to_entity_addr_key(hash: &ContractHash) -> Key {
-    Key::AddressableEntity(EntityAddr::SmartContract(hash.value()))
+pub(crate) fn get_nft_contract_entity_hash_key(builder: &LmdbWasmTestBuilder) -> Key {
+    Key::addressable_entity_key(EntityKindTag::SmartContract, get_nft_contract_hash(builder))
 }
 
 pub(crate) fn get_nft_contract_package_hash(builder: &LmdbWasmTestBuilder) -> ContractPackageHash {
@@ -86,7 +80,7 @@ pub(crate) fn get_nft_contract_package_hash(builder: &LmdbWasmTestBuilder) -> Co
         .named_keys()
         .get(HASH_KEY_NAME_1_0_0)
         .expect("must have this entry in named keys")
-        .into_hash_addr()
+        .into_package_addr()
         .expect("must get hash_addr");
 
     ContractPackageHash::new(nft_hash_addr)
@@ -99,7 +93,7 @@ pub(crate) fn get_minting_contract_hash(builder: &LmdbWasmTestBuilder) -> Contra
         .named_keys()
         .get(MINTING_CONTRACT_NAME)
         .expect("must have minting contract hash entry in named keys")
-        .into_hash_addr()
+        .into_entity_hash_addr()
         .expect("must get hash_addr");
 
     ContractHash::new(minting_contract_hash)
@@ -107,17 +101,15 @@ pub(crate) fn get_minting_contract_hash(builder: &LmdbWasmTestBuilder) -> Contra
 
 pub(crate) fn get_minting_contract_package_hash(
     builder: &LmdbWasmTestBuilder,
-) -> ContractPackageHash {
-    let minting_contract_package_hash = builder
+) -> PackageHash {
+    builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
         .named_keys()
         .get(MINTING_CONTRACT_PACKAGE_NAME)
         .expect("must have minting contract package hash entry in named keys")
-        .into_hash_addr()
-        .expect("must get hash_addr");
-
-    ContractPackageHash::new(minting_contract_package_hash)
+        .into_package_hash()
+        .expect("must get hash_addr")
 }
 
 pub(crate) fn get_transfer_filter_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {

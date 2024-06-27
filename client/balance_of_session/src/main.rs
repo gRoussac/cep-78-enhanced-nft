@@ -7,8 +7,8 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 extern crate alloc;
 use alloc::string::String;
 
-use casper_contract::contract_api::{runtime, storage};
-use casper_types::{contracts::ContractHash, runtime_args, Key};
+use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
+use casper_types::{contracts::ContractHash, AddressableEntityHash, runtime_args, Key};
 
 const ENTRY_POINT_BALANCE_OF: &str = "balance_of";
 const ARG_NFT_CONTRACT_HASH: &str = "nft_contract_hash";
@@ -17,15 +17,14 @@ const ARG_KEY_NAME: &str = "key_name";
 
 #[no_mangle]
 pub extern "C" fn call() {
-    let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_hash_addr()
-        .map(ContractHash::new)
-        .unwrap();
+    let nft_contract_hash: AddressableEntityHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
+        .into_entity_hash()
+        .unwrap_or_revert();
     let key_name: String = runtime::get_named_arg(ARG_KEY_NAME);
     let token_owner: Key = runtime::get_named_arg(ARG_TOKEN_OWNER);
 
     let balance = runtime::call_contract::<u64>(
-        nft_contract_hash.into(),
+        nft_contract_hash,
         ENTRY_POINT_BALANCE_OF,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner,

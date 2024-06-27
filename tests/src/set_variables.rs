@@ -1,5 +1,5 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
-use casper_types::{contracts::ContractHash, runtime_args, Key};
+use casper_types::{addressable_entity::EntityKindTag, contracts::ContractHash, runtime_args, Key};
 use contract::{
     constants::{
         ACL_PACKAGE_MODE, ALLOW_MINTING, ARG_ACL_PACKAGE_MODE, ARG_ALLOW_MINTING,
@@ -35,7 +35,7 @@ fn only_installer_should_be_able_to_toggle_allow_minting() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = nft_contract_hash.into();
+    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     // Account other than installer account should not be able to change allow_minting
     // Red test

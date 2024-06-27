@@ -1,5 +1,5 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
-use casper_types::{account::AccountHash, runtime_args, Key};
+use casper_types::{account::AccountHash, addressable_entity::EntityKindTag, runtime_args, Key};
 use contract::constants::{
     ARG_COLLECTION_NAME, ARG_SOURCE_KEY, ARG_TARGET_KEY, ARG_TOKEN_ID, ARG_TOKEN_META_DATA,
     ARG_TOKEN_OWNER, ENTRY_POINT_REGISTER_OWNER,
@@ -14,7 +14,7 @@ use crate::utility::{
         InstallerRequestBuilder, NFTIdentifierMode, NFTMetadataKind, OwnerReverseLookupMode,
         OwnershipMode,
     },
-    support::{self, genesis},
+    support::{self, genesis, get_nft_contract_hash},
 };
 
 #[test]
@@ -32,7 +32,7 @@ fn mint_cost_should_remain_stable() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let first_mint_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -101,8 +101,8 @@ fn transfer_costs_should_remain_stable() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_hash = support::get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = nft_contract_hash.into();
+    let nft_contract_hash = get_nft_contract_hash(&builder);
+    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     for _ in 0..3 {
         let mint_request = ExecuteRequestBuilder::standard(
@@ -213,7 +213,7 @@ fn should_cost_less_when_installing_without_reverse_lookup(reporting: OwnerRever
 
     let reverse_lookup_gas_cost = builder.last_exec_gas_cost();
 
-    let reverse_lookup_hash: Key = support::get_nft_contract_hash(&builder).into();
+    let reverse_lookup_hash: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let page_dictionary_lookup = builder.query(None, reverse_lookup_hash, &["page_0".to_string()]);
 
@@ -233,7 +233,7 @@ fn should_cost_less_when_installing_without_reverse_lookup(reporting: OwnerRever
 
     let no_lookup_gas_cost = builder.last_exec_gas_cost();
 
-    let no_lookup_hash: Key = support::get_nft_contract_hash(&builder).into();
+    let no_lookup_hash: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let page_dictionary_lookup = builder.query(None, no_lookup_hash, &["page_0".to_string()]);
 

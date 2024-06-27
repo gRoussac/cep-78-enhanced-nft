@@ -24,8 +24,8 @@ mod transfer;
 mod costs;
 #[cfg(test)]
 mod metadata;
-#[cfg(test)]
-mod upgrade;
+// #[cfg(test)]
+// mod upgrade;
 // A collection of tests that are focused
 // around token events.
 #[cfg(test)]

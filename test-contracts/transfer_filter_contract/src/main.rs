@@ -8,10 +8,10 @@ extern crate alloc;
 
 use alloc::{string::ToString, vec};
 
-use casper_contract::contract_api::{
+use casper_contract::{contract_api::{
     runtime::{self, ret},
     storage,
-};
+}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
     addressable_entity::{EntityKindTag, NamedKeys},
     contracts::ContractVersion,
@@ -70,9 +70,9 @@ fn install_filter_contract() -> (AddressableEntityHash, ContractVersion) {
 pub extern "C" fn set_return_value() {
     let return_value: u8 = runtime::get_named_arg(ARG_FILTER_CONTRACT_RETURN_VALUE);
     let uref = runtime::get_key(ARG_FILTER_CONTRACT_RETURN_VALUE)
-        .unwrap()
+        .unwrap_or_revert()
         .into_uref()
-        .unwrap();
+        .unwrap_or_revert();
 
     storage::write(uref, return_value);
 
@@ -82,13 +82,13 @@ pub extern "C" fn set_return_value() {
 #[no_mangle]
 pub extern "C" fn can_transfer() {
     let uref = runtime::get_key(ARG_FILTER_CONTRACT_RETURN_VALUE)
-        .unwrap()
+        .unwrap_or_revert()
         .into_uref()
-        .unwrap();
+        .unwrap_or_revert();
 
-    let return_value = storage::read::<u8>(uref).unwrap().unwrap();
+    let return_value = storage::read::<u8>(uref).unwrap_or_revert().unwrap_or_revert();
 
-    ret(CLValue::from_t(return_value).unwrap());
+    ret(CLValue::from_t(return_value).unwrap_or_revert());
 }
 
 #[no_mangle]

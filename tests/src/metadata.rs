@@ -25,7 +25,7 @@ use crate::utility::{
         TEST_CUSTOM_METADATA, TEST_CUSTOM_METADATA_SCHEMA, TEST_CUSTOM_UPDATED_METADATA,
     },
     support::{
-        self, assert_expected_error, genesis, get_minting_contract_hash, get_nft_contract_hash,
+        self, assert_expected_error, genesis, get_minting_contract_hash, get_nft_contract_entity_hash_key
     },
 };
 
@@ -43,7 +43,7 @@ fn should_prevent_update_in_immutable_mode() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let mint_token_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -112,7 +112,7 @@ fn should_prevent_update_for_invalid_metadata() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let mint_token_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -165,7 +165,7 @@ fn should_prevent_metadata_update_by_non_owner_key() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let nft_owner_account_key = Key::Account(AccountHash::new([4u8; 32]));
 
@@ -239,7 +239,7 @@ fn should_allow_update_for_valid_metadata_based_on_kind(
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let custom_metadata = serde_json::to_string_pretty(&*TEST_CUSTOM_METADATA)
         .expect("must convert to json metadata");
@@ -416,7 +416,7 @@ fn should_get_metadata_using_token_id() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = get_nft_contract_entity_hash_key(&builder);
 
     let is_whitelisted_account = support::get_dictionary_value_from_key::<bool>(
         &builder,
@@ -503,7 +503,7 @@ fn should_get_metadata_using_token_metadata_hash() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = get_nft_contract_entity_hash_key(&builder);
 
     let is_whitelisted_account = support::get_dictionary_value_from_key::<bool>(
         &builder,
@@ -592,7 +592,7 @@ fn should_revert_minting_token_metadata_hash_twice() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = get_nft_contract_entity_hash_key(&builder);
 
     let is_whitelisted_account = support::get_dictionary_value_from_key::<bool>(
         &builder,
@@ -694,7 +694,7 @@ fn should_get_metadata_using_custom_token_hash() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = get_nft_contract_entity_hash_key(&builder);
 
     let is_whitelisted_account = support::get_dictionary_value_from_key::<bool>(
         &builder,
@@ -781,7 +781,7 @@ fn should_revert_minting_custom_token_hash_identifier_twice() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = get_nft_contract_entity_hash_key(&builder);
 
     let is_whitelisted_account = support::get_dictionary_value_from_key::<bool>(
         &builder,
@@ -909,7 +909,7 @@ fn should_not_require_json_schema_when_kind_is(nft_metadata_kind: NFTMetadataKin
 
     builder.exec(install_request).expect_success().commit();
 
-    let nft_contract_key: Key = support::get_nft_contract_hash(&builder).into();
+    let nft_contract_key: Key = support::get_nft_contract_entity_hash_key(&builder);
 
     let original_metadata = match &nft_metadata_kind {
         NFTMetadataKind::CEP78 => TEST_PRETTY_CEP78_METADATA,
