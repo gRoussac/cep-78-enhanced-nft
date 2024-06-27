@@ -21,7 +21,12 @@ use casper_engine_test_support::{
 use casper_execution_engine::{engine_state::Error as EngineStateError, execution::ExecError};
 
 use casper_types::{
-    account::AccountHash, addressable_entity::EntityKindTag, bytesrepr::{Bytes, FromBytes}, contracts::{ContractHash, ContractPackageHash}, AddressableEntityHash, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes, PackageHash, RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512
+    account::AccountHash,
+    addressable_entity::EntityKindTag,
+    bytesrepr::{Bytes, FromBytes},
+    contracts::{ContractHash, ContractPackageHash},
+    AddressableEntityHash, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes,
+    PackageHash, RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512,
 };
 use contract::constants::{HASH_KEY_NAME_1_0_0, INDEX_BY_HASH, PREFIX_PAGE_DICTIONARY};
 use rand::prelude::*;
@@ -99,9 +104,7 @@ pub(crate) fn get_minting_contract_hash(builder: &LmdbWasmTestBuilder) -> Contra
     ContractHash::new(minting_contract_hash)
 }
 
-pub(crate) fn get_minting_contract_package_hash(
-    builder: &LmdbWasmTestBuilder,
-) -> PackageHash {
+pub(crate) fn get_minting_contract_package_hash(builder: &LmdbWasmTestBuilder) -> PackageHash {
     builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
@@ -112,17 +115,17 @@ pub(crate) fn get_minting_contract_package_hash(
         .expect("must get hash_addr")
 }
 
-pub(crate) fn get_transfer_filter_contract_hash(builder: &LmdbWasmTestBuilder) -> ContractHash {
-    let transfer_filter_contract_hash = builder
+pub(crate) fn get_transfer_filter_contract_hash(
+    builder: &LmdbWasmTestBuilder,
+) -> AddressableEntityHash {
+    builder
         .get_entity_with_named_keys_by_account_hash(*DEFAULT_ACCOUNT_ADDR)
         .unwrap()
         .named_keys()
         .get(TRANSFER_FILTER_CONTRACT_NAME)
         .expect("must have transfer filter hash entry in named keys")
-        .into_hash_addr()
-        .expect("must get hash_addr");
-
-    ContractHash::new(transfer_filter_contract_hash)
+        .into_entity_hash()
+        .expect("must get hash_addr")
 }
 
 pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
@@ -131,28 +134,43 @@ pub(crate) fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
     dictionary_name: &str,
     dictionary_key: &str,
 ) -> T {
+    println!("{nft_contract_key:?}|{dictionary_name:?}|{dictionary_key:?}");
     let named_key = match nft_contract_key.into_entity_hash() {
-        Some(hash) => *builder
-            .get_entity_with_named_keys_by_entity_hash(hash)
-            .expect("should be named key from entity hash")
-            .named_keys()
-            .get(dictionary_name)
-            .expect("must have key"),
-        None => match nft_contract_key.into_account() {
-            Some(account_hash) => *builder
-                .get_entity_with_named_keys_by_account_hash(account_hash)
-                .expect("should be named key from account hash")
-                .named_keys()
+        Some(hash) => {
+            let entity_with_named_keys = builder
+                .get_entity_with_named_keys_by_entity_hash(hash)
+                .expect("should be named key from entity hash");
+            let named_keys = entity_with_named_keys.named_keys();
+            println!("{named_keys:?}");
+            named_keys
                 .get(dictionary_name)
-                .expect("must have key"),
-            None => *builder
-                .get_named_keys(EntityAddr::SmartContract(
+                .expect("must have key")
+                .to_owned()
+        }
+        None => match nft_contract_key.into_account() {
+            Some(account_hash) => {
+                let entity_with_named_keys = builder
+                    .get_entity_with_named_keys_by_account_hash(account_hash)
+                    .expect("should be named key from account hash");
+                let named_keys = entity_with_named_keys.named_keys();
+                println!("{named_keys:?}");
+                named_keys
+                    .get(dictionary_name)
+                    .expect("must have key")
+                    .to_owned()
+            }
+            None => {
+                let named_keys = builder.get_named_keys(EntityAddr::SmartContract(
                     nft_contract_key
                         .into_hash_addr()
                         .expect("should be entity addr"),
-                ))
-                .get(dictionary_name)
-                .expect("must have key"),
+                ));
+                println!("{named_keys:?}");
+                named_keys
+                    .get(dictionary_name)
+                    .expect("must have key")
+                    .to_owned()
+            }
         },
     };
 

@@ -13,7 +13,7 @@ pub struct Mint {
 }
 
 impl Mint {
-    pub fn new(recipient: Key, token_id: TokenIdentifier, data: String) -> Self {
+    pub fn new(recipient: Key, token_id: &TokenIdentifier, data: String) -> Self {
         Self {
             recipient,
             token_id: token_id.to_string(),
@@ -30,7 +30,7 @@ pub struct Burn {
 }
 
 impl Burn {
-    pub fn new(owner: Key, token_id: TokenIdentifier, burner: Key) -> Self {
+    pub fn new(owner: Key, token_id: &TokenIdentifier, burner: Key) -> Self {
         Self {
             owner,
             token_id: token_id.to_string(),
@@ -47,7 +47,7 @@ pub struct Approval {
 }
 
 impl Approval {
-    pub fn new(owner: Key, spender: Key, token_id: TokenIdentifier) -> Self {
+    pub fn new(owner: Key, spender: Key, token_id: &TokenIdentifier) -> Self {
         Self {
             owner,
             spender,
@@ -63,7 +63,7 @@ pub struct ApprovalRevoked {
 }
 
 impl ApprovalRevoked {
-    pub fn new(owner: Key, token_id: TokenIdentifier) -> Self {
+    pub fn new(owner: Key, token_id: &TokenIdentifier) -> Self {
         Self {
             owner,
             token_id: token_id.to_string(),
@@ -108,7 +108,7 @@ impl Transfer {
         owner: Key,
         spender: Option<Key>,
         recipient: Key,
-        token_id: TokenIdentifier,
+        token_id: &TokenIdentifier,
     ) -> Self {
         Self {
             owner,
@@ -126,7 +126,7 @@ pub struct MetadataUpdated {
 }
 
 impl MetadataUpdated {
-    pub fn new(token_id: TokenIdentifier, data: String) -> Self {
+    pub fn new(token_id: &TokenIdentifier, data: String) -> Self {
         Self {
             token_id: token_id.to_string(),
             data,

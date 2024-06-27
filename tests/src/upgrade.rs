@@ -307,7 +307,7 @@ fn should_safely_upgrade_in_hash_identifier_mode() {
         nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
-            ARG_TOKEN_OWNER => Key::Account(ACCOUNT_1_ADDR.to_owned())
+            ARG_TOKEN_OWNER => *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY
         },
     )
     .build();
@@ -320,7 +320,7 @@ fn should_safely_upgrade_in_hash_identifier_mode() {
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_SOURCE_KEY => Key::Account(*DEFAULT_ACCOUNT_ADDR),
-            ARG_TARGET_KEY => Key::Account(ACCOUNT_1_ADDR.to_owned()),
+            ARG_TARGET_KEY => *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY,
             ARG_IS_HASH_IDENTIFIER_MODE => true,
             ARG_TOKEN_HASH => expected_metadata[0].clone()
         },
@@ -332,7 +332,7 @@ fn should_safely_upgrade_in_hash_identifier_mode() {
     let actual_page = support::get_token_page_by_hash(
         &builder,
         &nft_contract_key,
-        &Key::Account(ACCOUNT_1_ADDR.to_owned()),
+        &*ACCOUNT_1_ADDRESSABLE_ENTITY_KEY,
         expected_metadata[0].clone(),
     );
 

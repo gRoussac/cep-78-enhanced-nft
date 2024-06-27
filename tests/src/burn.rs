@@ -1,15 +1,16 @@
 use crate::utility::{
     constants::{
         ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_NAME,
-        MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
-        TEST_PRETTY_721_META_DATA,
+        DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_WASM, MINT_SESSION_WASM,
+        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, TEST_PRETTY_721_META_DATA,
     },
     installer_request_builder::{
         BurnMode, InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode,
         NFTIdentifierMode, OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
     support::{
-        self, genesis, get_dictionary_value_from_key, get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_entity_hash_key, get_nft_contract_hash
+        self, genesis, get_dictionary_value_from_key, get_minting_contract_hash,
+        get_minting_contract_package_hash, get_nft_contract_entity_hash_key, get_nft_contract_hash,
     },
 };
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
@@ -40,8 +41,9 @@ fn should_burn_minted_token(reporting: OwnerReverseLookupMode) {
         .commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let token_owner: Key = Key::Account(*DEFAULT_ACCOUNT_ADDR);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let token_owner: Key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
     let token_id = 0u64;
 
     let reverse_lookup_enabled: bool = reporting == OwnerReverseLookupMode::Complete;
@@ -51,7 +53,7 @@ fn should_burn_minted_token(reporting: OwnerReverseLookupMode) {
             MINT_SESSION_WASM,
             runtime_args! {
                 ARG_NFT_CONTRACT_HASH => nft_contract_key,
-                ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+                ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
                 ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
                 ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
             },
@@ -63,7 +65,7 @@ fn should_burn_minted_token(reporting: OwnerReverseLookupMode) {
         let token_page = support::get_token_page_by_id(
             &builder,
             &nft_contract_key,
-            &Key::Account(*DEFAULT_ACCOUNT_ADDR),
+            &*DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
             token_id,
         );
 
@@ -163,7 +165,7 @@ fn should_not_burn_previously_burnt_token() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -175,7 +177,7 @@ fn should_not_burn_previously_burnt_token() {
     let token_page = support::get_token_page_by_id(
         &builder,
         &nft_contract_key,
-        &Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        &*DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         0u64,
     );
 
@@ -266,7 +268,8 @@ fn should_return_expected_error_burning_of_others_users_token() {
         .commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let account_user_1 = ACCOUNT_1_ADDR.to_owned();
 
@@ -275,7 +278,7 @@ fn should_return_expected_error_burning_of_others_users_token() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -287,7 +290,7 @@ fn should_return_expected_error_burning_of_others_users_token() {
     let token_page = support::get_token_page_by_id(
         &builder,
         &nft_contract_key,
-        &Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        &*DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         0u64,
     );
 
@@ -346,7 +349,7 @@ fn should_allow_contract_to_burn_token() {
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false,
     };
@@ -429,7 +432,7 @@ fn should_not_burn_in_non_burn_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -468,8 +471,9 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let token_owner: Key = Key::Account(*DEFAULT_ACCOUNT_ADDR);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let token_owner: Key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -557,7 +561,7 @@ fn should_let_account_operator_burn_tokens_with_operator_burn_mode() {
 
     let burner = Key::from(operator); // Burner is operator account
 
-    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
@@ -575,8 +579,9 @@ fn should_let_contract_operator_burn_tokens_with_operator_burn_mode() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let token_owner: Key = Key::Account(*DEFAULT_ACCOUNT_ADDR);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let token_owner: Key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -681,7 +686,7 @@ fn should_let_contract_operator_burn_tokens_with_operator_burn_mode() {
 
     let burner = Key::from(minting_contract_hash); // Burner is contract not session caller ACCOUNT_USER_1
 
-    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
@@ -700,8 +705,9 @@ fn should_let_package_operator_burn_tokens_with_contract_package_mode_and_operat
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let token_owner: Key = Key::Account(*DEFAULT_ACCOUNT_ADDR);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let token_owner: Key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -807,7 +813,7 @@ fn should_let_package_operator_burn_tokens_with_contract_package_mode_and_operat
 
     let burner = Key::from(minting_contract_hash); // Burner is contract not its package nor session caller ACCOUNT_USER_1
 
-    let expected_event = Burn::new(token_owner, TokenIdentifier::Index(token_id), burner);
+    let expected_event = Burn::new(token_owner, &TokenIdentifier::Index(token_id), burner);
     assert_eq!(actual_event, expected_event, "Expected Burn event.");
 }
 
@@ -826,14 +832,15 @@ fn should_burn_token_in_hash_identifier_mode() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },

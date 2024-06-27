@@ -8,7 +8,7 @@ use casper_contract::{
     contract_api::{runtime, storage},
     unwrap_or_revert::UnwrapOrRevert,
 };
-use casper_types::Key;
+use casper_types::{ApiError, Key};
 
 use crate::{
     constants::{
@@ -168,11 +168,13 @@ pub fn record_cep47_event_dictionary(event: CEP47Event) {
         }
     };
     let dictionary_uref = match runtime::get_key(EVENTS) {
-        Some(dict_uref) => dict_uref.into_uref().unwrap_or_revert(),
-        None => storage::new_dictionary(EVENTS).unwrap_or_revert(),
+        Some(dict_uref) => dict_uref
+            .into_uref()
+            .unwrap_or_revert_with(ApiError::User(334)),
+        None => storage::new_dictionary(EVENTS).unwrap_or_revert_with(ApiError::User(335)),
     };
     let len = storage::dictionary_get(dictionary_uref, "len")
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(336))
         .unwrap_or(0_u64);
     storage::dictionary_put(dictionary_uref, &len.to_string(), event);
     storage::dictionary_put(dictionary_uref, "len", len + 1);

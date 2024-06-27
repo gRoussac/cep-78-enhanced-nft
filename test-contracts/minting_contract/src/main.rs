@@ -54,7 +54,7 @@ pub extern "C" fn mint() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1001));
 
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
     let token_metadata: String = runtime::get_named_arg(ARG_TOKEN_META_DATA);
@@ -104,7 +104,7 @@ pub extern "C" fn approve() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1002));
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
     let spender_key = runtime::get_named_arg::<Key>(ARG_SPENDER);
@@ -124,7 +124,7 @@ pub extern "C" fn revoke() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1003));
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
@@ -142,7 +142,7 @@ pub extern "C" fn transfer() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1004));
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
     let from_token_owner = runtime::get_named_arg::<Key>(ARG_SOURCE_KEY);
@@ -166,7 +166,7 @@ pub extern "C" fn burn() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1005));
 
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
@@ -184,7 +184,7 @@ pub extern "C" fn metadata() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1006));
 
     let metadata: String = if runtime::get_named_arg::<bool>(ARG_IS_HASH_IDENTIFIER_MODE) {
         let token_hash = runtime::get_named_arg::<String>(ARG_TOKEN_HASH);
@@ -213,7 +213,7 @@ pub extern "C" fn register_contract() {
     let nft_contract_hash: AddressableEntityHash =
         runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
             .into_entity_hash()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(1007));
 
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
 
@@ -240,9 +240,9 @@ fn install_minting_contract() -> (AddressableEntityHash, ContractVersion) {
 
 fn upgrade_minting_contract(name: &str) -> (AddressableEntityHash, ContractVersion) {
     let contract_package_hash: PackageHash = runtime::get_key(name)
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(1008))
         .into_package_hash()
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(1009));
     let named_keys = named_keys();
     let entry_points = get_entry_points();
     storage::add_contract_version(

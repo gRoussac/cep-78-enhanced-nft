@@ -8,9 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use casper_contract::{contract_api::runtime, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
-    bytesrepr,
-    bytesrepr::{FromBytes, ToBytes},
-    CLType, CLTyped,
+    bytesrepr::{self, FromBytes, ToBytes},
+    ApiError, CLType, CLTyped,
 };
 
 use crate::{
@@ -137,7 +136,7 @@ pub(crate) fn get_metadata_schema(kind: &NFTMetadataKind) -> CustomMetadataSchem
 
             serde_json_wasm::from_str::<CustomMetadataSchema>(&custom_schema_json)
                 .map_err(|_| NFTCoreError::InvalidJsonSchema)
-                .unwrap_or_revert()
+                .unwrap_or_revert_with(ApiError::User(301))
         }
     }
 }

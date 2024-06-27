@@ -6,14 +6,25 @@ use casper_types::{account::AccountHash, addressable_entity::EntityKindTag, runt
 
 use contract::{
     constants::{
-        ACCESS_KEY_NAME_1_0_0, APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_EVENTS_MODE, ARG_NAMED_KEY_CONVENTION, ARG_OPERATOR, ARG_SOURCE_KEY, ARG_SPENDER, ARG_TARGET_KEY, ARG_TOKEN_HASH, ARG_TOKEN_ID, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, BURNER, BURNT_TOKENS, ENTRY_POINT_APPROVE, ENTRY_POINT_BURN, ENTRY_POINT_REGISTER_OWNER, ENTRY_POINT_SET_APPROVALL_FOR_ALL, ENTRY_POINT_SET_TOKEN_METADATA, EVENTS, EVENT_TYPE, METADATA_CEP78, METADATA_CUSTOM_VALIDATED, METADATA_NFT721, METADATA_RAW, OPERATOR, OWNER, PREFIX_CEP78, PREFIX_HASH_KEY_NAME, RECIPIENT, SPENDER, TOKEN_COUNT, TOKEN_ID
+        ACCESS_KEY_NAME_1_0_0, APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_EVENTS_MODE,
+        ARG_NAMED_KEY_CONVENTION, ARG_OPERATOR, ARG_SOURCE_KEY, ARG_SPENDER, ARG_TARGET_KEY,
+        ARG_TOKEN_HASH, ARG_TOKEN_ID, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, BURNER, BURNT_TOKENS,
+        ENTRY_POINT_APPROVE, ENTRY_POINT_BURN, ENTRY_POINT_REGISTER_OWNER,
+        ENTRY_POINT_SET_APPROVALL_FOR_ALL, ENTRY_POINT_SET_TOKEN_METADATA, EVENTS, EVENT_TYPE,
+        METADATA_CEP78, METADATA_CUSTOM_VALIDATED, METADATA_NFT721, METADATA_RAW, OPERATOR, OWNER,
+        PREFIX_CEP78, PREFIX_HASH_KEY_NAME, RECIPIENT, SPENDER, TOKEN_COUNT, TOKEN_ID,
     },
     modalities::{EventsMode, NamedKeyConventionMode},
 };
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME, ARG_NFT_CONTRACT_HASH, ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_NAME, IS_APPROVED_FOR_ALL_WASM, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA, TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_721_META_DATA, TEST_PRETTY_UPDATED_CEP78_METADATA, TRANSFER_SESSION_WASM
+        ACCOUNT_1_ADDR, ACCOUNT_2_ADDR, ACCOUNT_3_ADDR, ARG_IS_HASH_IDENTIFIER_MODE, ARG_KEY_NAME,
+        ARG_NFT_CONTRACT_HASH, ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_1_0_0_WASM, CONTRACT_NAME,
+        IS_APPROVED_FOR_ALL_WASM, MINT_1_0_0_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM,
+        NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
+        TEST_PRETTY_CEP78_METADATA, TEST_PRETTY_UPDATED_721_META_DATA,
+        TEST_PRETTY_UPDATED_CEP78_METADATA, TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, NFTIdentifierMode, NFTMetadataKind,
@@ -21,7 +32,9 @@ use crate::utility::{
         TEST_CUSTOM_UPDATED_METADATA,
     },
     support::{
-        self, call_session_code_with_ret, genesis, get_dictionary_value_from_key, get_nft_contract_entity_hash_key, get_nft_contract_hash, get_token_page_by_id, query_stored_value
+        self, call_session_code_with_ret, genesis, get_dictionary_value_from_key,
+        get_nft_contract_entity_hash_key, get_nft_contract_hash, get_token_page_by_id,
+        query_stored_value,
     },
 };
 
@@ -103,7 +116,8 @@ fn should_record_cep47_dictionary_style_transfer_token_event_in_hash_identifier_
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -478,7 +492,8 @@ fn should_cep47_dictionary_style_approve_event_in_hash_identifier_mode() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -574,8 +589,9 @@ fn should_cep47_dictionary_style_approvall_for_all_event() {
         .expect_success()
         .commit();
 
-        let nft_contract_hash = get_nft_contract_hash(&builder);
-        let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_hash = get_nft_contract_hash(&builder);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -647,14 +663,9 @@ fn should_cep47_dictionary_style_approvall_for_all_event() {
     expected_event.insert(PREFIX_HASH_KEY_NAME.to_string(), package);
     expected_event.insert(
         OWNER.to_string(),
-        Key::Account(*DEFAULT_ACCOUNT_ADDR)
-            .to_string(),
+        Key::Account(*DEFAULT_ACCOUNT_ADDR).to_string(),
     );
-    expected_event.insert(
-        OPERATOR.to_string(),
-        operator_key
-            .to_string(),
-    );
+    expected_event.insert(OPERATOR.to_string(), operator_key.to_string());
     assert_eq!(event, expected_event);
 }
 
@@ -673,8 +684,9 @@ fn should_cep47_dictionary_style_revoked_for_all_event() {
         .expect_success()
         .commit();
 
-        let nft_contract_hash = get_nft_contract_hash(&builder);
-        let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_hash = get_nft_contract_hash(&builder);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -764,10 +776,7 @@ fn should_cep47_dictionary_style_revoked_for_all_event() {
         OWNER.to_string(),
         Key::Account(*DEFAULT_ACCOUNT_ADDR).to_string(),
     );
-    expected_event.insert(
-        OPERATOR.to_string(),
-        operator_key.to_string(),
-    );
+    expected_event.insert(OPERATOR.to_string(), operator_key.to_string());
     assert_eq!(event, expected_event);
 }
 
@@ -924,7 +933,8 @@ fn should_not_record_events_in_no_events_mode() {
         .commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,

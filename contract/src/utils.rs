@@ -9,17 +9,12 @@ use casper_event_standard::Schemas;
 use core::{convert::TryInto, mem::MaybeUninit};
 
 use casper_contract::{
-    contract_api::{self, runtime, storage},
+    contract_api::{self, account, runtime::{self, revert}, storage},
     ext_ffi,
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    account::AccountHash,
-    api_error,
-    bytesrepr::{self, FromBytes, ToBytes},
-    contracts::{ContractHash, ContractPackageHash},
-    system::Caller,
-    ApiError, CLTyped, Key, URef,
+    account::AccountHash, api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::{ContractHash, ContractPackageHash}, system::Caller, ApiError, CLTyped, Key, PackageHash, URef
 };
 
 use crate::{
@@ -85,13 +80,35 @@ pub fn encode_dictionary_item_key(key: Key) -> String {
     match key {
         Key::Account(account_hash) => account_hash.to_string(),
         Key::Hash(hash_addr) => ContractHash::new(hash_addr).to_string(),
-        _ => runtime::revert(NFTCoreError::InvalidKey),
+        Key::AddressableEntity(entity) => entity.to_string(),
+        Key::Package(package) => PackageHash::from(package).to_string(),
+        Key::URef(_) => revert(ApiError::User(2001)),
+        Key::Transfer(_) => revert(ApiError::User(2002)),
+        Key::DeployInfo(_) => revert(ApiError::User(2003)),
+        Key::EraInfo(_) => revert(ApiError::User(2004)),
+        Key::Balance(_) => revert(ApiError::User(2005)),
+        Key::Bid(_) => revert(ApiError::User(2006)),
+        Key::Withdraw(_) => revert(ApiError::User(2007)),
+        Key::Dictionary(_) => revert(ApiError::User(2008)),
+        Key::SystemEntityRegistry => revert(ApiError::User(2009)),
+        Key::EraSummary => revert(ApiError::User(2010)),
+        Key::Unbond(_) => revert(ApiError::User(2011)),
+        Key::ChainspecRegistry => revert(ApiError::User(2012)),
+        Key::ChecksumRegistry => revert(ApiError::User(2013)),
+        Key::BidAddr(_) => revert(ApiError::User(2014)),
+        Key::ByteCode(_) => revert(ApiError::User(2015)),
+        Key::Message(_) => revert(ApiError::User(20016)),
+        Key::NamedKey(_) => revert(ApiError::User(20017)),
+        Key::BlockGlobal(_) => revert(ApiError::User(2018)),
+        Key::BalanceHold(_) => revert(ApiError::User(2019)),
+        Key::EntryPoint(_) => revert(ApiError::User(2020)),
+        // _ => runtime::revert(NFTCoreError::InvalidKey),
     }
 }
 
 pub fn encode_key_and_value<T: CLTyped + ToBytes>(key: &Key, value: &T) -> String {
-    let mut bytes_a = key.to_bytes().unwrap_or_revert();
-    let mut bytes_b = value.to_bytes().unwrap_or_revert();
+    let mut bytes_a = key.to_bytes().unwrap_or_revert_with(ApiError::User(302));
+    let mut bytes_b = value.to_bytes().unwrap_or_revert_with(ApiError::User(303));
 
     bytes_a.append(&mut bytes_b);
 
@@ -254,7 +271,7 @@ pub fn read_with_user_errors<T: CLTyped + FromBytes>(
         }
     };
 
-    let value_bytes = read_host_buffer(value_size).unwrap_or_revert();
+    let value_bytes = read_host_buffer(value_size).unwrap_or_revert_with(ApiError::User(303));
 
     bytesrepr::deserialize(value_bytes).unwrap_or_revert_with(invalid)
 }
@@ -283,43 +300,34 @@ pub fn read_host_buffer(size: usize) -> Result<Vec<u8>, ApiError> {
 }
 
 pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
-    let bytes = t.into_bytes().unwrap_or_revert();
+    let bytes = t.into_bytes().unwrap_or_revert_with(ApiError::User(304));
     let ptr = bytes.as_ptr();
     let size = bytes.len();
     (ptr, size, bytes)
 }
 
-pub enum VerifiedCaller {
-    Session(AccountHash),
-    StoredCaller(ContractHash, ContractPackageHash),
-}
+pub fn get_verified_caller() -> (Key, Option<Key>) {
+    use casper_types::EntityAddr;
 
-pub fn get_verified_caller() -> Result<VerifiedCaller, NFTCoreError> {
-    let holder_mode = get_holder_mode()?;
-    match *runtime::get_call_stack()
+    let get_verified_caller: Caller = runtime::get_call_stack()
         .iter()
         .nth_back(1)
         .to_owned()
         .unwrap_or_revert()
-    {
-        Caller::Initiator { account_hash } => {
-            if let NFTHolderMode::Contracts = holder_mode {
-                return Err(NFTCoreError::InvalidHolderMode);
-            }
-            Ok(VerifiedCaller::Session(account_hash))
-        }
+        .clone();
+
+    match get_verified_caller {
+        Caller::Initiator { account_hash } => (
+            Key::AddressableEntity(EntityAddr::Account(account_hash.value())),
+            None,
+        ),
         Caller::Entity {
-            entity_hash,
             package_hash,
-        } => {
-            if let NFTHolderMode::Accounts = holder_mode {
-                return Err(NFTCoreError::InvalidHolderMode);
-            }
-            Ok(VerifiedCaller::StoredCaller(
-                ContractHash::new(entity_hash.value()),
-                ContractPackageHash::new(package_hash.value()),
-            ))
-        }
+            entity_hash,
+        } => (
+            Key::AddressableEntity(EntityAddr::SmartContract(entity_hash.value())),
+            Some(package_hash.into()),
+        ),
     }
 }
 
@@ -333,14 +341,14 @@ pub fn get_token_identifier_from_runtime_args(
             NFTCoreError::InvalidTokenIdentifier,
         )
         .map(TokenIdentifier::new_index)
-        .unwrap_or_revert(),
+        .unwrap_or_revert_with(ApiError::User(306)),
         NFTIdentifierMode::Hash => get_named_arg_with_user_errors::<String>(
             ARG_TOKEN_HASH,
             NFTCoreError::MissingTokenID,
             NFTCoreError::InvalidTokenIdentifier,
         )
         .map(TokenIdentifier::new_hash)
-        .unwrap_or_revert(),
+        .unwrap_or_revert_with(ApiError::User(307)),
     }
 }
 
@@ -379,7 +387,7 @@ pub fn get_burn_mode() -> BurnMode {
         NFTCoreError::InvalidBurnMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(308));
     burn_mode
 }
 
@@ -446,7 +454,7 @@ pub fn insert_hash_id_lookups(
         index_by_hash_uref,
         &token_identifier.get_dictionary_item_key(),
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(309))
     .is_some()
     {
         runtime::revert(NFTCoreError::DuplicateIdentifier)
@@ -455,7 +463,7 @@ pub fn insert_hash_id_lookups(
         hash_by_index_uref,
         &current_number_of_minted_tokens.to_string(),
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(310))
     .is_some()
     {
         runtime::revert(NFTCoreError::DuplicateIdentifier)
@@ -463,7 +471,10 @@ pub fn insert_hash_id_lookups(
     storage::dictionary_put(
         hash_by_index_uref,
         &current_number_of_minted_tokens.to_string(),
-        token_identifier.clone().get_hash().unwrap_or_revert(),
+        token_identifier
+            .clone()
+            .get_hash()
+            .unwrap_or_revert_with(ApiError::User(311)),
     );
     storage::dictionary_put(
         index_by_hash_uref,
@@ -485,7 +496,7 @@ pub fn get_token_index(token_identifier: &TokenIdentifier) -> u64 {
                 index_by_hash_uref,
                 &token_identifier.get_dictionary_item_key(),
             )
-            .unwrap_or_revert()
+            .unwrap_or_revert_with(ApiError::User(312))
             .unwrap_or_revert_with(NFTCoreError::InvalidTokenIdentifier)
         }
     }
@@ -521,16 +532,18 @@ pub fn migrate_owned_tokens_in_ordinal_mode() {
                 &NFTIdentifierMode::Ordinal,
                 &token_owner_item_key,
             )
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(313));
             for token_identifier in owned_tokens_list.into_iter() {
-                let token_id = token_identifier.get_index().unwrap_or_revert();
+                let token_id = token_identifier
+                    .get_index()
+                    .unwrap_or_revert_with(ApiError::User(314));
                 let page_number = token_id / PAGE_SIZE;
                 let page_index = token_id % PAGE_SIZE;
                 let mut page_record = match storage::dictionary_get::<Vec<bool>>(
                     page_table_uref,
                     &token_owner_item_key,
                 )
-                .unwrap_or_revert()
+                .unwrap_or_revert_with(ApiError::User(315))
                 {
                     Some(page_record) => page_record,
                     None => vec![false; page_table_width as usize],
@@ -544,7 +557,7 @@ pub fn migrate_owned_tokens_in_ordinal_mode() {
                 storage::dictionary_put(page_table_uref, &token_owner_item_key, page_record);
                 let mut page =
                     match storage::dictionary_get::<Vec<bool>>(page_uref, &token_owner_item_key)
-                        .unwrap_or_revert()
+                        .unwrap_or_revert_with(ApiError::User(316))
                     {
                         None => vec![false; PAGE_SIZE as usize],
                         Some(single_page) => single_page,
@@ -581,7 +594,7 @@ pub fn should_migrate_token_hashes(token_owner: Key) -> bool {
         page_table_uref,
         &encode_dictionary_item_key(token_owner),
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(317))
     .unwrap_or_revert_with(NFTCoreError::UnregisteredOwnerFromMigration);
     if page_table.contains(&true) {
         return false;
@@ -623,7 +636,7 @@ pub fn migrate_token_hashes(token_owner: Key) {
         let page_address = token_address % PAGE_SIZE;
         let mut page_table =
             match storage::dictionary_get::<Vec<bool>>(page_table_uref, &token_owner_item_key)
-                .unwrap_or_revert()
+                .unwrap_or_revert_with(ApiError::User(318))
             {
                 Some(page_record) => page_record,
                 None => vec![false; page_table_width as usize],
@@ -636,7 +649,7 @@ pub fn migrate_token_hashes(token_owner: Key) {
             NFTCoreError::InvalidStorageUref,
         );
         let mut page = match storage::dictionary_get::<Vec<bool>>(page_uref, &token_owner_item_key)
-            .unwrap_or_revert()
+            .unwrap_or_revert_with(ApiError::User(319))
         {
             Some(single_page) => single_page,
             None => vec![false; PAGE_SIZE as usize],
@@ -672,7 +685,7 @@ pub fn get_reporting_mode() -> OwnerReverseLookupMode {
         NFTCoreError::InvalidReportingMode,
     )
     .try_into()
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(320))
 }
 
 pub fn add_page_entry_and_page_record(
@@ -700,15 +713,16 @@ pub fn add_page_entry_and_page_record(
         NFTCoreError::InvalidPageUref,
     );
 
-    let mut page_table =
-        match storage::dictionary_get::<Vec<bool>>(page_table_uref, item_key).unwrap_or_revert() {
-            Some(page_table) => page_table,
-            None => runtime::revert(if on_mint {
-                NFTCoreError::UnregisteredOwnerInMint
-            } else {
-                NFTCoreError::UnregisteredOwnerInTransfer
-            }),
-        };
+    let mut page_table = match storage::dictionary_get::<Vec<bool>>(page_table_uref, item_key)
+        .unwrap_or_revert_with(ApiError::User(321))
+    {
+        Some(page_table) => page_table,
+        None => runtime::revert(if on_mint {
+            NFTCoreError::UnregisteredOwnerInMint
+        } else {
+            NFTCoreError::UnregisteredOwnerInTransfer
+        }),
+    };
 
     let mut page = if !page_table[page_table_entry as usize] {
         // We mark the page table entry to true to signal the allocation of a page.
@@ -717,7 +731,7 @@ pub fn add_page_entry_and_page_record(
         vec![false; PAGE_SIZE as usize]
     } else {
         storage::dictionary_get::<Vec<bool>>(page_uref, item_key)
-            .unwrap_or_revert()
+            .unwrap_or_revert_with(ApiError::User(322))
             .unwrap_or_revert_with(NFTCoreError::MissingPage)
     };
 
@@ -742,7 +756,7 @@ pub fn update_page_entry_and_page_record(
     );
 
     let mut source_page = storage::dictionary_get::<Vec<bool>>(page_uref, old_item_key)
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(323))
         .unwrap_or_revert_with(NFTCoreError::InvalidPageNumber);
 
     if !source_page[page_address as usize] {
@@ -760,7 +774,7 @@ pub fn update_page_entry_and_page_record(
     );
 
     let mut target_page_table = storage::dictionary_get::<Vec<bool>>(page_table_uref, new_item_key)
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(324))
         .unwrap_or_revert_with(NFTCoreError::UnregisteredOwnerInTransfer);
 
     let mut target_page = if !target_page_table[page_table_entry as usize] {
@@ -770,8 +784,8 @@ pub fn update_page_entry_and_page_record(
         vec![false; PAGE_SIZE as usize]
     } else {
         storage::dictionary_get::<Vec<bool>>(page_uref, new_item_key)
-            .unwrap_or_revert()
-            .unwrap_or_revert()
+            .unwrap_or_revert_with(ApiError::User(325))
+            .unwrap_or_revert_with(ApiError::User(326))
     };
 
     let _ = core::mem::replace(&mut target_page[page_address as usize], true);
@@ -788,13 +802,17 @@ pub fn create_metadata_requirements(
     let mut metadata_requirements = MetadataRequirement::new();
     for optional in opt {
         metadata_requirements.insert(
-            optional.try_into().unwrap_or_revert(),
+            optional
+                .try_into()
+                .unwrap_or_revert_with(ApiError::User(327)),
             Requirement::Optional,
         );
     }
     for required in req {
         metadata_requirements.insert(
-            required.try_into().unwrap_or_revert(),
+            required
+                .try_into()
+                .unwrap_or_revert_with(ApiError::User(328)),
             Requirement::Required,
         );
     }
@@ -822,10 +840,10 @@ pub fn requires_rlo_migration() -> bool {
         Some(migration_flag_key) => {
             let migration_uref = migration_flag_key
                 .into_uref()
-                .unwrap_or_revert_with(NFTCoreError::InvalidKey);
+                .unwrap_or_revert_with(NFTCoreError::InvalidUrefMigrationKey);
             let has_rlo_migration = storage::read::<bool>(migration_uref)
-                .unwrap_or_revert()
-                .unwrap_or_revert();
+                .unwrap_or_revert_with(ApiError::User(329))
+                .unwrap_or_revert_with(ApiError::User(330));
             runtime::remove_key(MIGRATION_FLAG);
             !has_rlo_migration
         }
@@ -833,10 +851,10 @@ pub fn requires_rlo_migration() -> bool {
             Some(rlo_flag_key) => {
                 let rlo_flag_uref = rlo_flag_key
                     .into_uref()
-                    .unwrap_or_revert_with(NFTCoreError::InvalidKey);
+                    .unwrap_or_revert_with(NFTCoreError::InvalidRloKey);
                 storage::read::<bool>(rlo_flag_uref)
-                    .unwrap_or_revert()
-                    .unwrap_or_revert()
+                    .unwrap_or_revert_with(ApiError::User(331))
+                    .unwrap_or_revert_with(ApiError::User(332))
             }
             None => true,
         },
@@ -863,7 +881,7 @@ pub fn migrate_contract_whitelist_to_acl_whitelist() {
                 NFTCoreError::InvalidMintingMode,
             )
             .try_into()
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(333));
 
             // Migrate to ACL
             if MintingMode::Installer == minting_mode {

@@ -29,10 +29,7 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    addressable_entity::{EntityKindTag, NamedKeys},
-    contracts::{ContractHash, ContractPackageHash},
-    runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType,
-    EntryPoints, Key, KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged,
+    account::AccountHash, addressable_entity::{EntityKindTag, NamedKeys}, contracts::{ContractHash, ContractPackageHash}, runtime_args, ApiError, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged
 };
 use constants::{
     ACCESS_KEY_NAME_1_0_0, ACL_PACKAGE_MODE, ACL_WHITELIST, ALLOW_MINTING, APPROVED,
@@ -76,7 +73,6 @@ use modalities::{
     NFTKind, NFTMetadataKind, NamedKeyConventionMode, OwnerReverseLookupMode, OwnershipMode,
     Requirement, TokenIdentifier, TransferFilterContractResult, WhitelistMode,
 };
-use utils::VerifiedCaller;
 
 #[no_mangle]
 pub extern "C" fn init() {
@@ -105,21 +101,21 @@ pub extern "C" fn init() {
         NFTCoreError::MissingCollectionName,
         NFTCoreError::InvalidCollectionName,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(200));
 
     let collection_symbol: String = utils::get_named_arg_with_user_errors(
         ARG_COLLECTION_SYMBOL,
         NFTCoreError::MissingCollectionSymbol,
         NFTCoreError::InvalidCollectionSymbol,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(201));
 
     let total_token_supply: u64 = utils::get_named_arg_with_user_errors(
         ARG_TOTAL_TOKEN_SUPPLY,
         NFTCoreError::MissingTotalTokenSupply,
         NFTCoreError::InvalidTotalTokenSupply,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(202));
 
     if total_token_supply > MAX_TOTAL_TOKEN_SUPPLY {
         runtime::revert(NFTCoreError::ExceededMaxTotalSupply)
@@ -130,59 +126,59 @@ pub extern "C" fn init() {
         NFTCoreError::MissingMintingStatus,
         NFTCoreError::InvalidMintingStatus,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(203));
 
     let minting_mode: MintingMode = utils::get_named_arg_with_user_errors::<u8>(
         ARG_MINTING_MODE,
         NFTCoreError::MissingMintingMode,
         NFTCoreError::InvalidMintingMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(204))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(205));
 
     let ownership_mode: OwnershipMode = utils::get_named_arg_with_user_errors::<u8>(
         ARG_OWNERSHIP_MODE,
         NFTCoreError::MissingOwnershipMode,
         NFTCoreError::InvalidOwnershipMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(206))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(207));
 
     let nft_kind: NFTKind = utils::get_named_arg_with_user_errors::<u8>(
         ARG_NFT_KIND,
         NFTCoreError::MissingNftKind,
         NFTCoreError::InvalidNftKind,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(208))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(209));
 
     let holder_mode: NFTHolderMode = utils::get_named_arg_with_user_errors::<u8>(
         ARG_HOLDER_MODE,
         NFTCoreError::MissingHolderMode,
         NFTCoreError::InvalidHolderMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(210))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(211));
 
     let whitelist_mode: WhitelistMode = utils::get_named_arg_with_user_errors::<u8>(
         ARG_WHITELIST_MODE,
         NFTCoreError::MissingWhitelistMode,
         NFTCoreError::InvalidWhitelistMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(212))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(213));
 
     let acl_whitelist = utils::get_named_arg_with_user_errors::<Vec<Key>>(
         ARG_ACL_WHITELIST,
         NFTCoreError::MissingACLWhiteList,
         NFTCoreError::InvalidACLWhitelist,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(214));
 
     // Revert if minting mode is not ACL and acl list is not empty
     if MintingMode::Acl != minting_mode && !acl_whitelist.is_empty() {
@@ -202,7 +198,7 @@ pub extern "C" fn init() {
         NFTCoreError::MissingACLPackageMode,
         NFTCoreError::InvalidACLPackageMode,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(215));
 
     let package_operator_mode: bool = utils::get_optional_named_arg_with_user_errors::<bool>(
         ARG_PACKAGE_OPERATOR_MODE,
@@ -215,37 +211,37 @@ pub extern "C" fn init() {
         NFTCoreError::MissingReceiptName,
         NFTCoreError::InvalidReceiptName,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(216));
 
     let package_hash = utils::get_named_arg_with_user_errors::<String>(
         ARG_NFT_PACKAGE_KEY,
         NFTCoreError::MissingCep78PackageHash,
         NFTCoreError::InvalidCep78InvalidHash,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(217));
 
     let base_metadata_kind: NFTMetadataKind = utils::get_named_arg_with_user_errors::<u8>(
         ARG_NFT_METADATA_KIND,
         NFTCoreError::MissingNFTMetadataKind,
         NFTCoreError::InvalidNFTMetadataKind,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(218))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(219));
 
     let optional_metadata = utils::get_named_arg_with_user_errors::<Vec<u8>>(
         ARG_OPTIONAL_METADATA,
         NFTCoreError::MissingOptionalNFTMetadataKind,
         NFTCoreError::InvalidOptionalNFTMetadataKind,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(220));
 
     let additional_required_metadata = utils::get_named_arg_with_user_errors::<Vec<u8>>(
         ARG_ADDITIONAL_REQUIRED_METADATA,
         NFTCoreError::MissingAdditionalNFTMetadataKind,
         NFTCoreError::InvalidAdditionalNFTMetadataKind,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(221));
 
     let nft_metadata_kinds = utils::create_metadata_requirements(
         base_metadata_kind,
@@ -258,7 +254,7 @@ pub extern "C" fn init() {
         NFTCoreError::MissingJsonSchema,
         NFTCoreError::InvalidJsonSchema,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(222));
 
     // Check if schema is missing before checking its validity
     if base_metadata_kind == NFTMetadataKind::CustomValidated && json_schema.is_empty() {
@@ -273,7 +269,7 @@ pub extern "C" fn init() {
         {
             serde_json_wasm::from_str::<CustomMetadataSchema>(&json_schema)
                 .map_err(|_| NFTCoreError::InvalidJsonSchema)
-                .unwrap_or_revert();
+                .unwrap_or_revert_with(ApiError::User(223));
         }
     }
 
@@ -282,27 +278,27 @@ pub extern "C" fn init() {
         NFTCoreError::MissingIdentifierMode,
         NFTCoreError::InvalidIdentifierMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(224))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(225));
 
     let metadata_mutability: MetadataMutability = utils::get_named_arg_with_user_errors::<u8>(
         ARG_METADATA_MUTABILITY,
         NFTCoreError::MissingMetadataMutability,
         NFTCoreError::InvalidMetadataMutability,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(226))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(227));
 
     let burn_mode: BurnMode = utils::get_named_arg_with_user_errors::<u8>(
         ARG_BURN_MODE,
         NFTCoreError::MissingBurnMode,
         NFTCoreError::InvalidBurnMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(228))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(229));
 
     let operator_burn_mode: bool = utils::get_optional_named_arg_with_user_errors::<bool>(
         ARG_OPERATOR_BURN_MODE,
@@ -315,9 +311,9 @@ pub extern "C" fn init() {
         NFTCoreError::MissingReportingMode,
         NFTCoreError::InvalidReportingMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(230))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(231));
 
     // OwnerReverseLookup TransfersOnly mode should be Transferable
     if OwnerReverseLookupMode::TransfersOnly == reporting_mode
@@ -338,7 +334,7 @@ pub extern "C" fn init() {
             ContractHash::from(
                 transfer_filter_contract_contract_key
                     .into_hash_addr()
-                    .unwrap_or_revert(),
+                    .unwrap_or_revert_with(ApiError::User(232)),
             )
         });
 
@@ -408,12 +404,12 @@ pub extern "C" fn init() {
         NFTCoreError::MissingEventsMode,
         NFTCoreError::InvalidEventsMode,
     )
-    .unwrap_or_revert()
+    .unwrap_or_revert_with(ApiError::User(233))
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(234));
 
     // Initialize events structures for CES.
-    if let EventsMode::CES = events_mode {
+    if [EventsMode::CES, EventsMode::NativeNCES, EventsMode::All].contains(&events_mode) {
         utils::init_events();
     }
     runtime::put_key(EVENTS_MODE, storage::new_uref(events_mode as u8).into());
@@ -579,7 +575,7 @@ pub extern "C" fn set_variables() {
             NFTCoreError::InvalidWhitelistMode,
         )
         .try_into()
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(235));
         match whitelist_mode {
             WhitelistMode::Unlocked => {
                 // Clear acl whitelist
@@ -605,13 +601,20 @@ pub extern "C" fn set_variables() {
         NFTCoreError::InvalidEventsMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(236));
 
     // Emit VariablesSet event.
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::VariablesSet),
         EventsMode::CES => casper_event_standard::emit(VariablesSet::new()),
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            record_cep47_event_dictionary(CEP47Event::VariablesSet);
+            casper_event_standard::emit(VariablesSet::new());
+        }
     }
 }
 
@@ -655,15 +658,10 @@ pub extern "C" fn mint() {
         NFTCoreError::InvalidMintingMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(237));
 
     let (caller, contract_package): (Key, Option<Key>) =
-        match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
-            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
-                (contract_hash.into(), Some(contract_package_hash.into()))
-            }
-        };
+        utils::get_verified_caller();
 
     // Revert if minting is private and caller is not installer.
     if MintingMode::Installer == minting_mode {
@@ -677,6 +675,17 @@ pub extern "C" fn mint() {
                 // Revert if private minting is required and caller is not installer.
                 if runtime::get_caller() != installer_account {
                     runtime::revert(NFTCoreError::InvalidMinter)
+                }
+            },
+            KeyTag::AddressableEntity =>{
+                let installer_account = runtime::get_key(INSTALLER)
+                    .unwrap_or_revert_with(NFTCoreError::MissingInstallerKey)
+                    .into_entity_hash_addr()
+                    .unwrap_or_revert_with(NFTCoreError::FailedToConvertToEntityHash);
+
+                // Revert if private minting is required and caller is not installer.
+                if runtime::get_caller() != AccountHash::new(installer_account) {
+                    runtime::revert(NFTCoreError::InvalidMinterEntity)
                 }
             }
             _ => runtime::revert(NFTCoreError::InvalidKey),
@@ -713,6 +722,11 @@ pub extern "C" fn mint() {
                 if !is_whitelisted {
                     runtime::revert(NFTCoreError::InvalidMinter);
                 }
+            },
+            KeyTag::AddressableEntity => {
+                if !is_whitelisted {
+                    runtime::revert(NFTCoreError::UnlistedEntity);
+                }
             }
             _ => runtime::revert(NFTCoreError::InvalidKey),
         }
@@ -730,7 +744,7 @@ pub extern "C" fn mint() {
         NFTCoreError::MissingTokenMetaData,
         NFTCoreError::InvalidTokenMetaData,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(239));
 
     let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
         IDENTIFIER_MODE,
@@ -738,7 +752,7 @@ pub extern "C" fn mint() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(240));
 
     // This is the token ID.
     let optional_token_hash: String = utils::get_optional_named_arg_with_user_errors::<String>(
@@ -779,7 +793,7 @@ pub extern "C" fn mint() {
 
     // The contract's ownership behavior (determined at installation) determines,
     // who owns the NFT we are about to mint.()
-    let ownership_mode = utils::get_ownership_mode().unwrap_or_revert();
+    let ownership_mode = utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(241));
     let token_owner_key: Key =
         if let OwnershipMode::Assigned | OwnershipMode::Transferable = ownership_mode {
             runtime::get_named_arg(ARG_TOKEN_OWNER)
@@ -831,19 +845,33 @@ pub extern "C" fn mint() {
             NFTCoreError::MissingEventsMode,
             NFTCoreError::InvalidEventsMode,
         ))
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(242));
 
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CES => casper_event_standard::emit(Mint::new(
             token_owner_key,
-            token_identifier.clone(),
+            &token_identifier,
             token_metadata,
         )),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Mint {
             recipient: token_owner_key,
             token_id: token_identifier.clone(),
         }),
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            casper_event_standard::emit(Mint::new(
+                token_owner_key,
+                &token_identifier,
+                token_metadata,
+            ));
+            record_cep47_event_dictionary(CEP47Event::Mint {
+                recipient: token_owner_key,
+                token_id: token_identifier.clone(),
+            });
+        }
     }
 
     if let OwnerReverseLookupMode::Complete = utils::get_reporting_mode() {
@@ -883,17 +911,11 @@ pub extern "C" fn burn() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(243));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
-    let (caller, contract_package): (Key, Option<Key>) =
-        match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
-            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
-                (contract_hash.into(), Some(contract_package_hash.into()))
-            }
-        };
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
 
     let token_owner = match utils::get_dictionary_value_from_key::<Key>(
         TOKEN_OWNERS,
@@ -983,18 +1005,29 @@ pub extern "C" fn burn() {
             NFTCoreError::MissingEventsMode,
             NFTCoreError::InvalidEventsMode,
         ))
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(245));
 
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CES => {
-            casper_event_standard::emit(Burn::new(token_owner, token_identifier, caller))
+            casper_event_standard::emit(Burn::new(token_owner, &token_identifier, caller))
         }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::Burn {
             owner: token_owner,
             token_id: token_identifier,
             burner: caller,
         }),
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            casper_event_standard::emit(Burn::new(token_owner, &token_identifier, caller));
+            record_cep47_event_dictionary(CEP47Event::Burn {
+                owner: token_owner,
+                token_id: token_identifier,
+                burner: caller,
+            });
+        }
     }
 }
 
@@ -1004,18 +1037,13 @@ pub extern "C" fn approve() {
     // If we are in minter or assigned mode it makes no sense to approve an account. Hence we
     // revert.
     if let OwnershipMode::Minter | OwnershipMode::Assigned =
-        utils::get_ownership_mode().unwrap_or_revert()
+        utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(246))
     {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
 
     let (caller, contract_package): (Key, Option<Key>) =
-        match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
-            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
-                (contract_hash.into(), Some(contract_package_hash.into()))
-            }
-        };
+         utils::get_verified_caller();
 
     let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
         IDENTIFIER_MODE,
@@ -1023,7 +1051,7 @@ pub extern "C" fn approve() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(248));
 
     let token_id = utils::get_token_identifier_from_runtime_args(&identifier_mode);
     let token_identifier_dictionary_key = token_id.get_dictionary_item_key();
@@ -1101,7 +1129,7 @@ pub extern "C" fn approve() {
             NFTCoreError::MissingSpenderAccountHash,
             NFTCoreError::InvalidSpenderAccountHash,
         )
-        .unwrap_or_revert(),
+        .unwrap_or_revert_with(ApiError::User(249)),
     };
 
     // If token owner or operator tries to approve itself that's probably a mistake and we revert.
@@ -1120,17 +1148,28 @@ pub extern "C" fn approve() {
         NFTCoreError::MissingEventsMode,
         NFTCoreError::InvalidEventsMode,
     ))
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(250));
 
     // Emit Approval event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => casper_event_standard::emit(Approval::new(owner, spender, token_id)),
+        EventsMode::CES => casper_event_standard::emit(Approval::new(owner, spender, &token_id)),
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::ApprovalGranted {
             owner,
             spender,
             token_id,
         }),
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            casper_event_standard::emit(Approval::new(owner, spender, &token_id));
+            record_cep47_event_dictionary(CEP47Event::ApprovalGranted {
+                owner,
+                spender,
+                token_id,
+            });
+        }
     };
 }
 
@@ -1140,18 +1179,13 @@ pub extern "C" fn revoke() {
     // If we are in minter or assigned mode it makes no sense to approve an account. Hence we
     // revert.
     if let OwnershipMode::Minter | OwnershipMode::Assigned =
-        utils::get_ownership_mode().unwrap_or_revert()
+        utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(251))
     {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
 
     let (caller, contract_package): (Key, Option<Key>) =
-        match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
-            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
-                (contract_hash.into(), Some(contract_package_hash.into()))
-            }
-        };
+         utils::get_verified_caller();
 
     let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
         IDENTIFIER_MODE,
@@ -1159,7 +1193,7 @@ pub extern "C" fn revoke() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(253));
 
     let token_id = utils::get_token_identifier_from_runtime_args(&identifier_mode);
     let token_identifier_dictionary_key = token_id.get_dictionary_item_key();
@@ -1238,14 +1272,21 @@ pub extern "C" fn revoke() {
         NFTCoreError::MissingEventsMode,
         NFTCoreError::InvalidEventsMode,
     ))
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(254));
 
     // Emit ApprovalRevoked event.
     match events_mode {
         EventsMode::NoEvents => {}
-        EventsMode::CES => casper_event_standard::emit(ApprovalRevoked::new(owner, token_id)),
+        EventsMode::CES => casper_event_standard::emit(ApprovalRevoked::new(owner, &token_id)),
         EventsMode::CEP47 => {
             record_cep47_event_dictionary(CEP47Event::ApprovalRevoked { owner, token_id })
+        }
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            casper_event_standard::emit(ApprovalRevoked::new(owner, &token_id));
+            record_cep47_event_dictionary(CEP47Event::ApprovalRevoked { owner, token_id });
         }
     };
 }
@@ -1256,7 +1297,7 @@ pub extern "C" fn set_approval_for_all() {
     // If we are in minter or assigned mode it makes no sense to approve an operator. Hence we
     // revert.
     if let OwnershipMode::Minter | OwnershipMode::Assigned =
-        utils::get_ownership_mode().unwrap_or_revert()
+        utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(255))
     {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
@@ -1268,19 +1309,16 @@ pub extern "C" fn set_approval_for_all() {
         NFTCoreError::MissingApproveAll,
         NFTCoreError::InvalidApproveAll,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(256));
 
-    let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-        VerifiedCaller::Session(account_hash) => account_hash.into(),
-        VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
-    };
+    let (caller, _): (Key, Option<Key>) = utils::get_verified_caller();
 
     let operator = utils::get_named_arg_with_user_errors::<Key>(
         ARG_OPERATOR,
         NFTCoreError::MissingOperator,
         NFTCoreError::InvalidOperator,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(258));
 
     // If caller tries to approve itself as operator that's probably a mistake and we revert.
     if caller == operator {
@@ -1297,7 +1335,7 @@ pub extern "C" fn set_approval_for_all() {
         NFTCoreError::InvalidEventsMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(259));
 
     match events_mode {
         EventsMode::NoEvents => {}
@@ -1321,6 +1359,10 @@ pub extern "C" fn set_approval_for_all() {
                 });
             }
         }
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {}
     }
 }
 
@@ -1332,14 +1374,14 @@ pub extern "C" fn is_approved_for_all() {
         NFTCoreError::MissingAccountHash,
         NFTCoreError::InvalidAccountHash,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(260));
 
     let operator = utils::get_named_arg_with_user_errors::<Key>(
         ARG_OPERATOR,
         NFTCoreError::MissingOperator,
         NFTCoreError::InvalidOperator,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(261));
 
     let owner_operator_item_key = utils::encode_key_and_value(&owner_key, &operator);
 
@@ -1361,7 +1403,7 @@ pub extern "C" fn transfer() {
     // If we are in minter or assigned mode we are not allowed to transfer ownership of token, hence
     // we revert.
     if let OwnershipMode::Minter | OwnershipMode::Assigned =
-        utils::get_ownership_mode().unwrap_or_revert()
+        utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(262))
     {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
@@ -1372,7 +1414,7 @@ pub extern "C" fn transfer() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(263));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
@@ -1394,19 +1436,14 @@ pub extern "C" fn transfer() {
         NFTCoreError::MissingAccountHash,
         NFTCoreError::InvalidAccountHash,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(264));
 
     if source_owner_key != owner {
         runtime::revert(NFTCoreError::InvalidAccount);
     }
 
     let (caller, contract_package): (Key, Option<Key>) =
-        match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => (account_hash.into(), None),
-            VerifiedCaller::StoredCaller(contract_hash, contract_package_hash) => {
-                (contract_hash.into(), Some(contract_package_hash.into()))
-            }
-        };
+        utils::get_verified_caller();
 
     // Check if caller is owner
     let is_owner = owner == caller;
@@ -1492,7 +1529,7 @@ pub extern "C" fn transfer() {
         NFTCoreError::MissingAccountHash,
         NFTCoreError::InvalidAccountHash,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(266));
 
     if NFTIdentifierMode::Hash == identifier_mode && runtime::get_key(OWNED_TOKENS).is_some() {
         if utils::should_migrate_token_hashes(source_owner_key) {
@@ -1572,7 +1609,7 @@ pub extern "C" fn transfer() {
         NFTCoreError::MissingEventsMode,
         NFTCoreError::InvalidEventsMode,
     ))
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(267));
 
     match events_mode {
         EventsMode::NoEvents => {}
@@ -1588,9 +1625,13 @@ pub extern "C" fn transfer() {
                 owner,
                 spender,
                 target_owner_key,
-                token_identifier.clone(),
+                &token_identifier,
             ));
         }
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {}
     }
 
     let reporting_mode = utils::get_reporting_mode();
@@ -1628,7 +1669,7 @@ pub extern "C" fn balance_of() {
         NFTCoreError::MissingAccountHash,
         NFTCoreError::InvalidAccountHash,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(268));
 
     let owner_key_item_string = utils::encode_dictionary_item_key(owner_key);
 
@@ -1649,7 +1690,7 @@ pub extern "C" fn owner_of() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(269));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
@@ -1661,7 +1702,11 @@ pub extern "C" fn owner_of() {
 
     if let NFTIdentifierMode::Ordinal = identifier_mode {
         // Revert if token_id is out of bounds
-        if token_identifier.get_index().unwrap_or_revert() >= number_of_minted_tokens {
+        if token_identifier
+            .get_index()
+            .unwrap_or_revert_with(ApiError::User(270))
+            >= number_of_minted_tokens
+        {
             runtime::revert(NFTCoreError::InvalidTokenIdentifier);
         }
     }
@@ -1694,13 +1739,17 @@ pub extern "C" fn metadata() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(271));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
     if let NFTIdentifierMode::Ordinal = identifier_mode {
         // Revert if token_id is out of bounds
-        if token_identifier.get_index().unwrap_or_revert() >= number_of_minted_tokens {
+        if token_identifier
+            .get_index()
+            .unwrap_or_revert_with(ApiError::User(272))
+            >= number_of_minted_tokens
+        {
             runtime::revert(NFTCoreError::InvalidTokenIdentifier);
         }
     }
@@ -1741,7 +1790,7 @@ pub extern "C" fn get_approved() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(273));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
@@ -1754,7 +1803,11 @@ pub extern "C" fn get_approved() {
 
     if let NFTIdentifierMode::Ordinal = identifier_mode {
         // Revert if token_id is out of bounds
-        if token_identifier.get_index().unwrap_or_revert() >= number_of_minted_tokens {
+        if token_identifier
+            .get_index()
+            .unwrap_or_revert_with(ApiError::User(274))
+            >= number_of_minted_tokens
+        {
             runtime::revert(NFTCoreError::InvalidTokenIdentifier);
         }
     }
@@ -1786,7 +1839,7 @@ pub extern "C" fn set_token_metadata() {
         NFTCoreError::InvalidMetadataMutability,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(275));
 
     if let MetadataMutability::Immutable = metadata_mutability {
         runtime::revert(NFTCoreError::ForbiddenMetadataUpdate)
@@ -1798,7 +1851,7 @@ pub extern "C" fn set_token_metadata() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(276));
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
@@ -1808,10 +1861,8 @@ pub extern "C" fn set_token_metadata() {
     );
 
     if let Some(token_owner_key) = token_owner {
-        let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => account_hash.into(),
-            VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
-        };
+        let (caller, _): (Key, Option<Key>) =
+            utils::get_verified_caller();
         if caller != token_owner_key {
             runtime::revert(NFTCoreError::InvalidTokenOwner)
         }
@@ -1831,7 +1882,7 @@ pub extern "C" fn set_token_metadata() {
         NFTCoreError::MissingTokenMetaData,
         NFTCoreError::InvalidTokenMetaData,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(278));
 
     for (metadata_kind, required) in metadata_kinds {
         if required == Requirement::Unneeded {
@@ -1860,20 +1911,32 @@ pub extern "C" fn set_token_metadata() {
         NFTCoreError::MissingEventsMode,
         NFTCoreError::InvalidEventsMode,
     ))
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(279));
 
     // Emit MetadataUpdate event.
     match events_mode {
         EventsMode::NoEvents => {}
         EventsMode::CES => {
             casper_event_standard::emit(MetadataUpdated::new(
-                token_identifier,
+                &token_identifier,
                 updated_token_metadata,
             ));
         }
         EventsMode::CEP47 => record_cep47_event_dictionary(CEP47Event::MetadataUpdate {
             token_id: token_identifier,
         }),
+        EventsMode::Native => {}
+        EventsMode::Native47 => {}
+        EventsMode::NativeNCES => {}
+        EventsMode::All => {
+            casper_event_standard::emit(MetadataUpdated::new(
+                &token_identifier,
+                updated_token_metadata,
+            ));
+            record_cep47_event_dictionary(CEP47Event::MetadataUpdate {
+                token_id: token_identifier,
+            });
+        }
     }
 }
 
@@ -1963,7 +2026,7 @@ fn do_migration() {
         NFTCoreError::InvalidIdentifierMode,
     )
     .try_into()
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(280));
 
     match identifier {
         NFTIdentifierMode::Ordinal => utils::migrate_owned_tokens_in_ordinal_mode(),
@@ -2035,6 +2098,16 @@ pub extern "C" fn migrate() {
                 casper_event_standard::emit(Migration::new());
             }
             (_, EventsMode::CEP47) => record_cep47_event_dictionary(CEP47Event::Migrate),
+            (_, EventsMode::Native) => {}
+            (_, EventsMode::Native47) => {}
+            (_, EventsMode::NativeNCES) => {
+                utils::init_events();
+                casper_event_standard::emit(Migration::new());
+            }
+            (_, EventsMode::All) => {
+                utils::init_events();
+                casper_event_standard::emit(Migration::new());
+            }
             (_, _) => {}
         }
         runtime::put_key(EVENTS_MODE, storage::new_uref(optional_events_mode).into());
@@ -2119,10 +2192,8 @@ pub extern "C" fn migrate() {
 #[no_mangle]
 pub extern "C" fn updated_receipts() {
     if let OwnerReverseLookupMode::Complete = utils::get_reporting_mode() {
-        let caller: Key = match utils::get_verified_caller().unwrap_or_revert() {
-            VerifiedCaller::Session(account_hash) => account_hash.into(),
-            VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
-        };
+        let (caller, _): (Key, Option<Key>) =
+            utils::get_verified_caller();
 
         let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
             IDENTIFIER_MODE,
@@ -2130,7 +2201,7 @@ pub extern "C" fn updated_receipts() {
             NFTCoreError::InvalidIdentifierMode,
         )
         .try_into()
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(282));
 
         if identifier_mode == NFTIdentifierMode::Hash && utils::should_migrate_token_hashes(caller)
         {
@@ -2160,7 +2231,7 @@ pub extern "C" fn updated_receipts() {
             updated_receipts.push((receipt_name, page_dictionary_address))
         }
 
-        runtime::ret(CLValue::from_t(updated_receipts).unwrap_or_revert())
+        runtime::ret(CLValue::from_t(updated_receipts).unwrap_or_revert_with(ApiError::User(283)))
     }
 }
 
@@ -2172,18 +2243,18 @@ pub extern "C" fn register_owner() {
     ]
     .contains(&utils::get_reporting_mode())
     {
-        let owner_key = match utils::get_ownership_mode().unwrap_or_revert() {
-            OwnershipMode::Minter => match utils::get_verified_caller().unwrap_or_revert() {
-                VerifiedCaller::Session(account_hash) => account_hash.into(),
-                VerifiedCaller::StoredCaller(contract_hash, _) => contract_hash.into(),
-            },
+        let owner_key = match utils::get_ownership_mode().unwrap_or_revert_with(ApiError::User(284))
+        {
+            OwnershipMode::Minter => {
+                utils::get_verified_caller().0
+            }
             OwnershipMode::Assigned | OwnershipMode::Transferable => {
                 utils::get_named_arg_with_user_errors::<Key>(
                     ARG_TOKEN_OWNER,
                     NFTCoreError::MissingTokenOwner,
                     NFTCoreError::InvalidTokenOwner,
                 )
-                .unwrap_or_revert()
+                .unwrap_or_revert_with(ApiError::User(286))
             }
         };
 
@@ -2196,7 +2267,7 @@ pub extern "C" fn register_owner() {
         let owner_item_key = utils::encode_dictionary_item_key(owner_key);
 
         if storage::dictionary_get::<Vec<bool>>(page_table_uref, &owner_item_key)
-            .unwrap_or_revert()
+            .unwrap_or_revert_with(ApiError::User(287))
             .is_none()
         {
             let page_table_width = utils::get_stored_value_with_user_errors::<u64>(
@@ -2220,7 +2291,10 @@ pub extern "C" fn register_owner() {
             NFTCoreError::MissingCep78PackageHash,
             NFTCoreError::InvalidCep78InvalidHash,
         ));
-        runtime::ret(CLValue::from_t((collection_name, package_uref)).unwrap_or_revert())
+        runtime::ret(
+            CLValue::from_t((collection_name, package_uref))
+                .unwrap_or_revert_with(ApiError::User(288)),
+        )
     }
 }
 
@@ -2540,7 +2614,7 @@ fn install_contract() {
         NFTCoreError::MissingCollectionName,
         NFTCoreError::InvalidCollectionName,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(289));
 
     // TODO: figure out examples of collection_symbol
     // The symbol for the NFT collection.
@@ -2550,7 +2624,7 @@ fn install_contract() {
         NFTCoreError::MissingCollectionSymbol,
         NFTCoreError::InvalidCollectionSymbol,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(290));
 
     // This represents the total number of NFTs that will
     // be minted by a specific instance of a contract.
@@ -2560,7 +2634,7 @@ fn install_contract() {
         NFTCoreError::MissingTotalTokenSupply,
         NFTCoreError::InvalidTotalTokenSupply,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(291));
 
     if total_token_supply == 0 {
         runtime::revert(NFTCoreError::CannotInstallWithZeroSupply)
@@ -2595,7 +2669,7 @@ fn install_contract() {
         NFTCoreError::MissingOwnershipMode,
         NFTCoreError::InvalidOwnershipMode,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(292));
 
     // Represents the type of NFT (i.e something physical/digital)
     // which will be minted over the lifetime of the contract.
@@ -2607,7 +2681,7 @@ fn install_contract() {
         NFTCoreError::MissingNftKind,
         NFTCoreError::InvalidNftKind,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(293));
 
     // Represents whether Accounts or Contracts, or both can hold NFTs for
     // a given contract instance. Refer to the enum `NFTHolderMode`
@@ -2670,7 +2744,7 @@ fn install_contract() {
         NFTCoreError::MissingNFTMetadataKind,
         NFTCoreError::InvalidNFTMetadataKind,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(294));
 
     let additional_required_metadata: Vec<u8> = utils::get_optional_named_arg_with_user_errors(
         ARG_ADDITIONAL_REQUIRED_METADATA,
@@ -2701,7 +2775,7 @@ fn install_contract() {
         NFTCoreError::MissingIdentifierMode,
         NFTCoreError::InvalidIdentifierMode,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(295));
 
     // Represents whether the metadata related to NFTs can be updated.
     // This value cannot be changed after installation. Refer to `MetadataMutability` in
@@ -2711,7 +2785,7 @@ fn install_contract() {
         NFTCoreError::MissingMetadataMutability,
         NFTCoreError::InvalidMetadataMutability,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(296));
 
     if identifier_mode == 1 && metadata_mutability == 1 {
         runtime::revert(NFTCoreError::InvalidMetadataMutability)
@@ -2784,7 +2858,7 @@ fn install_contract() {
     );
 
     let nft_contract_package_hash: PackageHash = runtime::get_key(&hash_key_name)
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(297))
         .into_package_hash()
         .unwrap_or_revert_with(NFTCoreError::InvalidPackageHash);
 
@@ -2835,7 +2909,7 @@ fn install_contract() {
 
 fn migrate_contract(access_key_name: String, package_key_name: String) {
     let nft_contract_package_hash = runtime::get_key(&package_key_name)
-        .unwrap_or_revert()
+        .unwrap_or_revert_with(ApiError::User(298))
         .into_package_hash()
         .unwrap_or_revert_with(NFTCoreError::MissingPackageHashForUpgrade);
 
@@ -2844,7 +2918,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
         NFTCoreError::MissingCollectionName,
         NFTCoreError::InvalidCollectionName,
     )
-    .unwrap_or_revert();
+    .unwrap_or_revert_with(ApiError::User(299));
 
     runtime::put_key(
         &format!("{PREFIX_HASH_KEY_NAME}_{collection_name}"),
@@ -2912,7 +2986,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
     ) {
         runtime_args
             .insert(ARG_TOTAL_TOKEN_SUPPLY, new_token_supply)
-            .unwrap_or_revert();
+            .unwrap_or_revert_with(ApiError::User(300));
     }
 
     runtime::call_contract::<()>(contract_hash, ENTRY_POINT_MIGRATE, runtime_args);
@@ -2927,7 +3001,7 @@ pub extern "C" fn call() {
         )
         .unwrap_or(NamedKeyConventionMode::DerivedFromCollectionName as u8)
         .try_into()
-        .unwrap_or_revert();
+        .unwrap_or_revert_with(ApiError::User(301));
 
     match convention_mode {
         NamedKeyConventionMode::DerivedFromCollectionName => install_contract(),

@@ -175,6 +175,11 @@ pub enum NFTCoreError {
     DuplicateIdentifier = 170,
     CannotInsertArg = 171,
     InvalidPackageHash = 172,
+    InvalidUrefMigrationKey = 173,
+    InvalidRloKey = 174,
+    UnlistedEntity = 175,
+    FailedToConvertToEntityHash = 176,
+    InvalidMinterEntity = 177,
 }
 
 impl From<NFTCoreError> for ApiError {

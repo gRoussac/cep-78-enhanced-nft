@@ -7,8 +7,11 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 extern crate alloc;
 use alloc::string::String;
 
-use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{AddressableEntityHash, contracts::ContractHash, runtime_args, Key};
+use casper_contract::{
+    contract_api::{runtime, storage},
+    unwrap_or_revert::UnwrapOrRevert,
+};
+use casper_types::{contracts::ContractHash, runtime_args, AddressableEntityHash, ApiError, Key};
 
 const ENTRY_POINT_OWNER_OF: &str = "owner_of";
 const ARG_NFT_CONTRACT_HASH: &str = "nft_contract_hash";
@@ -19,9 +22,10 @@ const ARG_IS_HASH_IDENTIFIER_MODE: &str = "is_hash_identifier_mode";
 
 #[no_mangle]
 pub extern "C" fn call() {
-    let nft_contract_hash: AddressableEntityHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
-        .into_entity_hash()
-        .unwrap_or_revert();
+    let nft_contract_hash: AddressableEntityHash =
+        runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
+            .into_entity_hash()
+            .unwrap_or_revert_with(ApiError::User(1501));
     let key_name: String = runtime::get_named_arg(ARG_KEY_NAME);
 
     let owner = if runtime::get_named_arg(ARG_IS_HASH_IDENTIFIER_MODE) {

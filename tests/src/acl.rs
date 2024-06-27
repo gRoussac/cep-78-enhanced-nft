@@ -1,15 +1,17 @@
 use crate::utility::{
     constants::{
         ACCOUNT_1_ADDR, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM,
-        MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
-        NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
+        DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM,
+        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MintingMode, NFTHolderMode, NFTMetadataKind,
         OwnerReverseLookupMode, OwnershipMode, WhitelistMode,
     },
     support::{
-        self, assert_expected_error, genesis, get_dictionary_value_from_key, get_minting_contract_hash, get_minting_contract_package_hash, get_nft_contract_entity_hash_key, get_nft_contract_hash
+        self, assert_expected_error, genesis, get_dictionary_value_from_key,
+        get_minting_contract_hash, get_minting_contract_package_hash,
+        get_nft_contract_entity_hash_key, get_nft_contract_hash,
     },
 };
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
@@ -214,7 +216,8 @@ fn should_allow_whitelisted_account_to_mint() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let is_whitelisted_account = get_dictionary_value_from_key::<bool>(
         &builder,
@@ -275,7 +278,8 @@ fn should_disallow_unlisted_account_from_minting() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let is_whitelisted_account = get_dictionary_value_from_key::<bool>(
         &builder,
@@ -385,7 +389,8 @@ fn should_allow_whitelisted_contract_to_mint() {
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key = minting_contract_hash.into();
+    let minting_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -485,7 +490,8 @@ fn should_allow_mixed_account_contract_to_mint() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     // Contract
     let is_whitelisted_contract = get_dictionary_value_from_key::<bool>(
@@ -526,7 +532,8 @@ fn should_allow_mixed_account_contract_to_mint() {
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key = minting_contract_hash.into();
+    let minting_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
 
     assert_eq!(actual_token_owner, minting_contract_key);
 
@@ -668,7 +675,8 @@ fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let is_whitelisted_account = get_dictionary_value_from_key::<bool>(
         &builder,
@@ -741,7 +749,8 @@ fn should_disallow_listed_account_from_minting_with_nftholder_contract() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let is_whitelisted_account = get_dictionary_value_from_key::<bool>(
         &builder,
@@ -925,7 +934,8 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key = minting_contract_hash.into();
+    let minting_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -982,7 +992,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
 
     let version_minting_contract = support::query_stored_value::<u32>(
         &builder,
-        Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         vec![MINTING_CONTRACT_VERSION.to_string()],
     );
 
@@ -999,7 +1009,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
 
     let version_minting_contract = support::query_stored_value::<u32>(
         &builder,
-        Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         vec![MINTING_CONTRACT_VERSION.to_string()],
     );
 
@@ -1077,7 +1087,8 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let seed_uref = *builder
         .query(None, nft_contract_key, &[])
@@ -1100,7 +1111,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false,
     };
@@ -1193,7 +1204,8 @@ fn should_be_able_to_update_whitelist_for_minting() {
     builder.exec(install_request).expect_success().commit();
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
-    let nft_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
+    let nft_contract_key: Key =
+        Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
     let seed_uref = *builder
         .query(None, nft_contract_key, &[])
@@ -1216,7 +1228,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER => Key::Account(*DEFAULT_ACCOUNT_ADDR),
+        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false,
     };
