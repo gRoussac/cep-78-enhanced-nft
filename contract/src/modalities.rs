@@ -78,6 +78,7 @@ impl TryFrom<u8> for MintingMode {
     }
 }
 
+#[derive(PartialEq, Eq, Default, Debug)]
 #[repr(u8)]
 pub enum NFTKind {
     /// The NFT represents a real-world physical
@@ -89,6 +90,7 @@ pub enum NFTKind {
     /// The NFT is the virtual representation
     /// of a physical notion, e.g a patent
     /// or copyright.
+    #[default]
     Virtual = 2,
 }
 
