@@ -2,7 +2,7 @@ use casper_engine_test_support::{
     ExecuteRequestBuilder, LmdbWasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
 };
 
-use casper_types::{account::AccountHash, addressable_entity::EntityKindTag, runtime_args, AddressableEntityHash, Key};
+use casper_types::{account::AccountHash, addressable_entity::EntityKindTag, runtime_args, Key};
 use contract::{
     constants::{
         ACL_WHITELIST, APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_OPERATOR,
@@ -17,7 +17,11 @@ use contract::{
 
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ACCOUNT_1_ADDRESSABLE_ENTITY_HASH, ACCOUNT_1_ADDRESSABLE_ENTITY_KEY, ACCOUNT_2_ADDR, ACCOUNT_2_ADDRESSABLE_ENTITY_KEY, ACCOUNT_3_ADDR, ACCOUNT_3_ADDRESSABLE_ENTITY_KEY, ARG_FILTER_CONTRACT_RETURN_VALUE, ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_HASH, DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_WASM, MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA, TRANSFER_FILTER_CONTRACT_WASM, TRANSFER_SESSION_WASM
+        ACCOUNT_1_ADDR, ACCOUNT_1_KEY, ACCOUNT_2_ADDR, ACCOUNT_2_KEY, ACCOUNT_3_ADDR,
+        ACCOUNT_3_KEY, ARG_FILTER_CONTRACT_RETURN_VALUE, ARG_IS_HASH_IDENTIFIER_MODE,
+        ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, DEFAULT_ACCOUNT_KEY, MINTING_CONTRACT_WASM,
+        MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL,
+        TEST_PRETTY_721_META_DATA, TRANSFER_FILTER_CONTRACT_WASM, TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MetadataMutability, MintingMode, NFTHolderMode, NFTIdentifierMode,
@@ -54,7 +58,7 @@ fn should_dissallow_transfer_with_minter_or_assigned_ownership_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string(),
         },
@@ -72,7 +76,7 @@ fn should_dissallow_transfer_with_minter_or_assigned_ownership_mode() {
     let expected_owner_balance = 1u64;
     assert_eq!(actual_owner_balance, expected_owner_balance);
 
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -93,7 +97,7 @@ fn should_dissallow_transfer_with_minter_or_assigned_ownership_mode() {
         nft_contract_hash.into(),
         ENTRY_POINT_TRANSFER,
         runtime_args! {
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
             ARG_TARGET_KEY =>  token_receiver_key,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
             ARG_TOKEN_ID => token_id,
@@ -124,7 +128,7 @@ fn should_transfer_token_from_sender_to_receiver() {
     builder.exec(install_request).expect_success().commit();
 
     let token_owner = *DEFAULT_ACCOUNT_ADDR;
-    let token_owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
@@ -158,7 +162,7 @@ fn should_transfer_token_from_sender_to_receiver() {
     assert_eq!(actual_owner_balance, expected_owner_balance);
 
     let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -248,7 +252,7 @@ fn approve_token_for_transfer_should_add_entry_to_approved_dictionary(
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -264,7 +268,7 @@ fn approve_token_for_transfer_should_add_entry_to_approved_dictionary(
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     if let Some(operator) = operator {
@@ -274,7 +278,7 @@ fn approve_token_for_transfer_should_add_entry_to_approved_dictionary(
             ENTRY_POINT_SET_APPROVALL_FOR_ALL,
             runtime_args! {
                 ARG_APPROVE_ALL => true,
-                ARG_OPERATOR => Key::addressable_entity_key(EntityKindTag::Account, AddressableEntityHash::new(operator.value())),
+                ARG_OPERATOR => Key::Account(AccountHash::new(operator.value())),
             },
         )
         .build();
@@ -348,7 +352,7 @@ fn revoke_token_for_transfer_should_remove_entry_to_approved_dictionary(
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -364,7 +368,7 @@ fn revoke_token_for_transfer_should_remove_entry_to_approved_dictionary(
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     if let Some(operator) = operator {
@@ -374,7 +378,7 @@ fn revoke_token_for_transfer_should_remove_entry_to_approved_dictionary(
             ENTRY_POINT_SET_APPROVALL_FOR_ALL,
             runtime_args! {
                 ARG_APPROVE_ALL => true,
-                ARG_OPERATOR => Key::addressable_entity_key(EntityKindTag::Account, AddressableEntityHash::new(operator.value())),
+                ARG_OPERATOR => Key::Account(AccountHash::new(operator.value())),
             },
         )
         .build();
@@ -476,7 +480,7 @@ fn should_dissallow_approving_when_ownership_mode_is_minter_or_assigned() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -485,7 +489,7 @@ fn should_dissallow_approving_when_ownership_mode_is_minter_or_assigned() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     let approve_request = ExecuteRequestBuilder::contract_call_by_hash(
@@ -530,7 +534,7 @@ fn should_be_able_to_transfer_token(
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -540,8 +544,7 @@ fn should_be_able_to_transfer_token(
     builder.exec(mint_session_call).expect_success().commit();
 
     // Create a "to approve" spender account account and transfer funds
-    let spender = ACCOUNT_1_ADDR.to_owned();
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     if let Some(operator) = operator {
@@ -551,7 +554,7 @@ fn should_be_able_to_transfer_token(
             ENTRY_POINT_SET_APPROVALL_FOR_ALL,
             runtime_args! {
                 ARG_APPROVE_ALL => true,
-                ARG_OPERATOR => Key::addressable_entity_key(EntityKindTag::Account, AddressableEntityHash::new(operator.value())),
+                ARG_OPERATOR => Key::Account(AccountHash::new(operator.value())),
             },
         )
         .build();
@@ -590,7 +593,7 @@ fn should_be_able_to_transfer_token(
     );
 
     // Create to_account and transfer minted token using spender
-    let to_account = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let to_account = *ACCOUNT_2_KEY;
 
     let register_owner = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -605,7 +608,7 @@ fn should_be_able_to_transfer_token(
     builder.exec(register_owner).expect_success().commit();
 
     let token_id = 0u64;
-    let token_owner = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner = *DEFAULT_ACCOUNT_KEY;
 
     let transfer_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -666,7 +669,7 @@ fn should_dissallow_same_approved_account_to_transfer_token_twice() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -677,7 +680,7 @@ fn should_dissallow_same_approved_account_to_transfer_token_twice() {
 
     // Create a "to approve" spender account and transfer funds
     let spender = ACCOUNT_1_ADDR.to_owned();
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     // Approve spender
@@ -708,7 +711,7 @@ fn should_dissallow_same_approved_account_to_transfer_token_twice() {
     );
 
     // Create to_account and transfer minted token using spender
-    let to_account = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let to_account = *ACCOUNT_2_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -721,7 +724,7 @@ fn should_dissallow_same_approved_account_to_transfer_token_twice() {
     .build();
     builder.exec(register_request).expect_success().commit();
 
-    let token_owner = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner = *DEFAULT_ACCOUNT_KEY;
 
     let transfer_request = ExecuteRequestBuilder::standard(
         spender,
@@ -738,7 +741,7 @@ fn should_dissallow_same_approved_account_to_transfer_token_twice() {
     builder.exec(transfer_request).expect_success().commit();
 
     // Create to_other_account and transfer minted token using spender
-    let to_other_account = *ACCOUNT_3_ADDRESSABLE_ENTITY_KEY;
+    let to_other_account = *ACCOUNT_3_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -796,7 +799,7 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -807,7 +810,7 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
 
     // Create a "to approve" spender and transfer funds
     let spender = ACCOUNT_1_ADDR.to_owned();
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     if let Some(operator) = operator {
@@ -817,7 +820,7 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
             ENTRY_POINT_SET_APPROVALL_FOR_ALL,
             runtime_args! {
                 ARG_APPROVE_ALL => true,
-                ARG_OPERATOR => Key::addressable_entity_key(EntityKindTag::Account, AddressableEntityHash::new(operator.value())),
+                ARG_OPERATOR => Key::Account(operator),
             },
         )
         .build();
@@ -856,14 +859,12 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
     );
 
     // Create to_account and transfer minted token using account
-    let to_account = ACCOUNT_2_ADDR.to_owned();
-
     let register_owner = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
-            ARG_TOKEN_OWNER => *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY
+            ARG_TOKEN_OWNER => *ACCOUNT_2_KEY
         },
     )
     .build();
@@ -882,7 +883,7 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
     .build();
     builder.exec(revoke_request).expect_success().commit();
 
-    let token_owner = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner = *DEFAULT_ACCOUNT_KEY;
 
     let unauthorized_transfer = ExecuteRequestBuilder::standard(
         spender,
@@ -890,7 +891,7 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_SOURCE_KEY =>  token_owner,
-            ARG_TARGET_KEY => *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY,
+            ARG_TARGET_KEY => *ACCOUNT_2_KEY,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
             ARG_TOKEN_ID => token_id,
         },
@@ -919,13 +920,13 @@ fn should_disallow_to_transfer_token_using_revoked_hash(
 
 #[test]
 fn should_disallow_to_transfer_token_using_revoked_account() {
-    let mut builder = genesis();
+    let builder = genesis();
     should_disallow_to_transfer_token_using_revoked_hash(builder, None)
 }
 
 #[test]
 fn should_disallow_to_transfer_token_using_revoked_operator() {
-    let mut builder = genesis();
+    let builder = genesis();
     let operator = ACCOUNT_3_ADDR.to_owned();
     should_disallow_to_transfer_token_using_revoked_hash(builder, Some(operator))
 }
@@ -954,7 +955,7 @@ fn should_be_able_to_approve_with_deprecated_operator_argument() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -964,7 +965,7 @@ fn should_be_able_to_approve_with_deprecated_operator_argument() {
     builder.exec(mint_session_call).expect_success().commit();
 
     // Create a "to approve" spender account account and transfer funds
-    let spender_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_1_KEY;
     let token_id = 0u64;
 
     // Approve spender
@@ -1008,8 +1009,7 @@ fn should_transfer_between_contract_to_account() {
         .commit();
 
     let minting_contract_hash = get_minting_contract_hash(&builder);
-    let minting_contract_key: Key =
-        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_contract_hash.value());
 
     let contract_whitelist = vec![Key::from(minting_contract_hash)];
 
@@ -1070,7 +1070,7 @@ fn should_transfer_between_contract_to_account() {
         nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY
         },
     )
     .build();
@@ -1081,7 +1081,7 @@ fn should_transfer_between_contract_to_account() {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
         ARG_SOURCE_KEY => minting_contract_key,
-        ARG_TARGET_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_TARGET_KEY => *DEFAULT_ACCOUNT_KEY,
     };
 
     let transfer_request = ExecuteRequestBuilder::contract_call_by_hash(
@@ -1101,16 +1101,11 @@ fn should_transfer_between_contract_to_account() {
         &token_id.to_string(),
     );
 
-    assert_eq!(*DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, updated_token_owner);
+    assert_eq!(*DEFAULT_ACCOUNT_KEY, updated_token_owner);
 }
 
 #[test]
 fn should_prevent_transfer_when_caller_is_not_owner() {
-    const ARG_AMOUNT: &str = "amount";
-    const ARG_TARGET: &str = "target";
-    const ARG_ID: &str = "id";
-    const ID_NONE: Option<u64> = None;
-
     let mut builder = genesis();
 
     // Create an account that is not the owner of the NFT to transfer the token itself.
@@ -1134,7 +1129,7 @@ fn should_prevent_transfer_when_caller_is_not_owner() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -1152,7 +1147,7 @@ fn should_prevent_transfer_when_caller_is_not_owner() {
         &token_id.to_string(),
     );
 
-    assert_eq!(*DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, actual_token_owner);
+    assert_eq!(*DEFAULT_ACCOUNT_KEY, actual_token_owner);
 
     let unauthorized_transfer = ExecuteRequestBuilder::standard(
         ACCOUNT_3_ADDR.to_owned(),
@@ -1161,8 +1156,8 @@ fn should_prevent_transfer_when_caller_is_not_owner() {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_TOKEN_ID => token_id,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
-            ARG_TARGET_KEY => *ACCOUNT_3_ADDRESSABLE_ENTITY_KEY
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
+            ARG_TARGET_KEY => *ACCOUNT_3_KEY
         },
     )
     .build();
@@ -1202,7 +1197,7 @@ fn should_transfer_token_in_hash_identifier_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -1219,7 +1214,7 @@ fn should_transfer_token_in_hash_identifier_mode() {
         nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
-            ARG_TOKEN_OWNER => Key::addressable_entity_key(EntityKindTag::Account,AddressableEntityHash::new([3u8;32]))
+            ARG_TOKEN_OWNER => Key::Account(AccountHash::new([3u8;32]))
         },
     )
     .build();
@@ -1233,8 +1228,8 @@ fn should_transfer_token_in_hash_identifier_mode() {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_IS_HASH_IDENTIFIER_MODE => true,
             ARG_TOKEN_HASH => token_hash,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
-            ARG_TARGET_KEY =>  Key::addressable_entity_key(EntityKindTag::Account,AddressableEntityHash::new([3u8;32])),
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
+            ARG_TARGET_KEY =>  Key::Account(AccountHash::new([3u8;32])),
         },
     )
     .build();
@@ -1259,8 +1254,7 @@ fn should_not_allow_non_approved_contract_to_transfer() {
         .commit();
 
     let minting_contract_hash = get_minting_contract_hash(&builder);
-    let minting_contract_key: Key =
-        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_contract_hash.value());
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_total_token_supply(100u64)
@@ -1279,7 +1273,7 @@ fn should_not_allow_non_approved_contract_to_transfer() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -1288,7 +1282,7 @@ fn should_not_allow_non_approved_contract_to_transfer() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1307,7 +1301,7 @@ fn should_not_allow_non_approved_contract_to_transfer() {
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -1379,7 +1373,7 @@ fn transfer_should_correctly_track_page_table_entries() {
             MINT_SESSION_WASM,
             runtime_args! {
                 ARG_NFT_CONTRACT_HASH => nft_contract_key,
-                ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+                ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
                 ARG_TOKEN_META_DATA => "",
                 ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
             },
@@ -1394,7 +1388,7 @@ fn transfer_should_correctly_track_page_table_entries() {
         nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
-            ARG_TOKEN_OWNER => *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY
+            ARG_TOKEN_OWNER => *ACCOUNT_1_KEY
         },
     )
     .build();
@@ -1408,8 +1402,8 @@ fn transfer_should_correctly_track_page_table_entries() {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_TOKEN_ID => 11u64,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
-            ARG_TARGET_KEY =>  *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
+            ARG_TARGET_KEY =>  *ACCOUNT_1_KEY,
         },
     )
     .build();
@@ -1420,7 +1414,7 @@ fn transfer_should_correctly_track_page_table_entries() {
         &builder,
         &nft_contract_key,
         PAGE_TABLE,
-        &ACCOUNT_1_ADDRESSABLE_ENTITY_HASH.to_string(),
+        &ACCOUNT_1_ADDR.to_string(),
     );
 
     assert!(account_user_1_page_table[0])
@@ -1450,7 +1444,7 @@ fn should_prevent_transfer_to_unregistered_owner() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => "",
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -1460,7 +1454,7 @@ fn should_prevent_transfer_to_unregistered_owner() {
     builder.exec(mint_session_call).expect_success().commit();
 
     let token_id = 0u64;
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let transfer_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1468,7 +1462,7 @@ fn should_prevent_transfer_to_unregistered_owner() {
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_TOKEN_ID => token_id,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
             ARG_TARGET_KEY => token_receiver_key,
             ARG_IS_HASH_IDENTIFIER_MODE => false
         },
@@ -1497,8 +1491,7 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
     builder.exec(install_request).expect_success().commit();
 
     let token_owner = *DEFAULT_ACCOUNT_ADDR;
-    let token_owner_entity_hash = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_HASH;
-    let token_owner_key = * DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
@@ -1535,12 +1528,12 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
         &builder,
         &nft_contract_key,
         TOKEN_COUNT,
-        &token_owner_entity_hash.to_string(),
+        &token_owner.to_string(),
     );
     let expected_owner_balance = 1u64;
     assert_eq!(actual_owner_balance, expected_owner_balance);
 
-    let token_receiver_key = ACCOUNT_1_ADDRESSABLE_ENTITY_KEY.to_owned();
+    let token_receiver_key = ACCOUNT_1_KEY.to_owned();
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1577,12 +1570,8 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
 
     assert_eq!(actual_token_owner, token_receiver_key);
 
-    let token_receiver_page = support::get_token_page_by_id(
-        &builder,
-        &nft_contract_key,
-        &token_receiver_key,
-        0u64,
-    );
+    let token_receiver_page =
+        support::get_token_page_by_id(&builder, &nft_contract_key, &token_receiver_key, 0u64);
 
     assert!(token_receiver_page[0]);
 
@@ -1590,7 +1579,7 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
         &builder,
         &nft_contract_key,
         TOKEN_COUNT,
-        &token_owner_entity_hash.to_string(),
+        &token_owner.to_string(),
     );
     let expected_sender_balance = 0u64;
     assert_eq!(actual_sender_balance, expected_sender_balance);
@@ -1599,7 +1588,7 @@ fn should_transfer_token_from_sender_to_receiver_with_transfer_only_reporting() 
         &builder,
         &nft_contract_key,
         TOKEN_COUNT,
-        &ACCOUNT_1_ADDRESSABLE_ENTITY_HASH.to_string(),
+        &ACCOUNT_1_ADDR.to_string(),
     );
     let expected_receiver_balance = 1u64;
     assert_eq!(actual_receiver_balance, expected_receiver_balance);
@@ -1621,7 +1610,7 @@ fn disallow_owner_to_approve_itself() {
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1645,7 +1634,7 @@ fn disallow_owner_to_approve_itself() {
         ENTRY_POINT_APPROVE,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
-            ARG_SPENDER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY
+            ARG_SPENDER => *DEFAULT_ACCOUNT_KEY
         },
     )
     .build();
@@ -1675,7 +1664,7 @@ fn disallow_operator_to_approve_itself() {
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1693,7 +1682,7 @@ fn disallow_operator_to_approve_itself() {
 
     let token_id = 0u64;
     let operator = ACCOUNT_3_ADDR.to_owned();
-    let operator_key = *ACCOUNT_3_ADDRESSABLE_ENTITY_KEY;
+    let operator_key = *ACCOUNT_3_KEY;
 
     let approval_all_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1743,7 +1732,7 @@ fn disallow_owner_to_approve_for_all_itself() {
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
-    let owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let mint_session_call = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1765,7 +1754,7 @@ fn disallow_owner_to_approve_for_all_itself() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_OPERATOR => *DEFAULT_ACCOUNT_KEY,
         },
     )
     .build();
@@ -1828,7 +1817,7 @@ fn check_transfers_with_transfer_filter_contract_modes() {
 
     builder.exec(install_request).expect_success().commit();
 
-    let token_owner_key = *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY;
+    let token_owner_key = *DEFAULT_ACCOUNT_KEY;
 
     let nft_contract_hash = get_nft_contract_hash(&builder);
     let nft_contract_key: Key =
@@ -1850,8 +1839,7 @@ fn check_transfers_with_transfer_filter_contract_modes() {
         builder.exec(mint_session_call).expect_success().commit();
     }
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1993,7 +1981,7 @@ fn should_disallow_transfer_from_contract_with_package_operator_mode_without_ope
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2002,8 +1990,7 @@ fn should_disallow_transfer_from_contract_with_package_operator_mode_without_ope
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2022,7 +2009,7 @@ fn should_disallow_transfer_from_contract_with_package_operator_mode_without_ope
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2078,7 +2065,7 @@ fn should_disallow_transfer_from_contract_without_package_operator_mode_with_pac
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2086,8 +2073,7 @@ fn should_disallow_transfer_from_contract_without_package_operator_mode_with_pac
     .build();
 
     builder.exec(mint_session_call).expect_success().commit();
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2106,7 +2092,7 @@ fn should_disallow_transfer_from_contract_without_package_operator_mode_with_pac
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2118,7 +2104,7 @@ fn should_disallow_transfer_from_contract_without_package_operator_mode_with_pac
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(minting_contract_package_hash)
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2183,7 +2169,7 @@ fn should_allow_transfer_from_contract_with_package_operator_mode_with_operator(
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2192,8 +2178,7 @@ fn should_allow_transfer_from_contract_with_package_operator_mode_with_operator(
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2212,7 +2197,7 @@ fn should_allow_transfer_from_contract_with_package_operator_mode_with_operator(
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2224,7 +2209,7 @@ fn should_allow_transfer_from_contract_with_package_operator_mode_with_operator(
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(minting_contract_package_hash)
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2292,7 +2277,7 @@ fn should_disallow_package_operator_to_approve_without_package_operator_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2301,8 +2286,7 @@ fn should_disallow_package_operator_to_approve_without_package_operator_mode() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2325,7 +2309,7 @@ fn should_disallow_package_operator_to_approve_without_package_operator_mode() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(minting_contract_package_hash)
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2336,8 +2320,7 @@ fn should_disallow_package_operator_to_approve_without_package_operator_mode() {
         .commit();
 
     let token_id = 0u64;
-    let spender = ACCOUNT_2_ADDR.to_owned();
-    let spender_key = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_2_KEY;
 
     let approve_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -2366,7 +2349,7 @@ fn should_disallow_package_operator_to_approve_without_package_operator_mode() {
         &token_id.to_string(),
     );
 
-    assert_eq!(actual_token_owner, *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY);
+    assert_eq!(actual_token_owner, *DEFAULT_ACCOUNT_KEY);
 }
 
 #[test]
@@ -2405,7 +2388,7 @@ fn should_allow_package_operator_to_approve_with_package_operator_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2414,8 +2397,7 @@ fn should_allow_package_operator_to_approve_with_package_operator_mode() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2437,7 +2419,7 @@ fn should_allow_package_operator_to_approve_with_package_operator_mode() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(minting_contract_package_hash)
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2449,7 +2431,7 @@ fn should_allow_package_operator_to_approve_with_package_operator_mode() {
 
     let token_id = 0u64;
     let spender = ACCOUNT_2_ADDR.to_owned();
-    let spender_key = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_2_KEY;
 
     let approve_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -2476,7 +2458,7 @@ fn should_allow_package_operator_to_approve_with_package_operator_mode() {
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2539,7 +2521,7 @@ fn should_allow_account_to_approve_spender_with_package_operator() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2548,8 +2530,7 @@ fn should_allow_account_to_approve_spender_with_package_operator() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver = ACCOUNT_1_ADDR.to_owned();
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2571,7 +2552,7 @@ fn should_allow_account_to_approve_spender_with_package_operator() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::from(minting_contract_package_hash)
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2582,7 +2563,7 @@ fn should_allow_account_to_approve_spender_with_package_operator() {
         .commit();
 
     let token_id = 0u64;
-    let spender_key = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_2_KEY;
 
     let approve_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -2606,7 +2587,7 @@ fn should_allow_account_to_approve_spender_with_package_operator() {
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2669,7 +2650,7 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA ,
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -2678,7 +2659,7 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let token_receiver_key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let token_receiver_key = *ACCOUNT_1_KEY;
 
     let register_request = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -2700,7 +2681,7 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
         ENTRY_POINT_SET_APPROVALL_FOR_ALL,
         runtime_args! {
             ARG_APPROVE_ALL => true,
-            ARG_OPERATOR => Key::Package(minting_contract_package_hash.value())
+            ARG_OPERATOR => Key::Hash(minting_contract_package_hash.value())
         },
     )
     .build();
@@ -2712,7 +2693,7 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
 
     let token_id = 0u64;
     let spender = ACCOUNT_2_ADDR.to_owned();
-    let spender_key = *ACCOUNT_2_ADDRESSABLE_ENTITY_KEY;
+    let spender_key = *ACCOUNT_2_KEY;
 
     let approve_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
@@ -2757,7 +2738,7 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
     let transfer_runtime_arguments = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
         ARG_TOKEN_ID => token_id,
-        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
         ARG_TARGET_KEY => token_receiver_key,
     };
 
@@ -2782,5 +2763,5 @@ fn should_allow_package_operator_to_revoke_with_package_operator_mode() {
         &token_id.to_string(),
     );
 
-    assert_eq!(actual_token_owner, *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY);
+    assert_eq!(actual_token_owner, *DEFAULT_ACCOUNT_KEY);
 }

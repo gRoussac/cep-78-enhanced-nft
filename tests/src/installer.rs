@@ -277,8 +277,6 @@ fn should_install_with_contract_holder_mode() {
 fn should_disallow_installation_of_contract_with_empty_locked_whitelist_with_holder_mode(
     nft_holder_mode: NFTHolderMode,
 ) {
-    let mut builder = genesis();
-
     let install_request_builder =
         InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
             .with_holder_mode(nft_holder_mode)

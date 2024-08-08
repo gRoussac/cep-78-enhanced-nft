@@ -1,4 +1,4 @@
-use casper_engine_test_support::DEFAULT_ACCOUNT_PUBLIC_KEY;
+use casper_engine_test_support::{DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY};
 use casper_types::{
     account::AccountHash, addressable_entity::EntityKindTag, AddressableEntityHash, Key, PublicKey,
     SecretKey,
@@ -45,46 +45,23 @@ pub static ACCOUNT_1_SECRET_KEY: Lazy<SecretKey> =
 pub static ACCOUNT_1_PUBLIC_KEY: Lazy<PublicKey> =
     Lazy::new(|| PublicKey::from(&*ACCOUNT_1_SECRET_KEY));
 pub static ACCOUNT_1_ADDR: Lazy<AccountHash> = Lazy::new(|| ACCOUNT_1_PUBLIC_KEY.to_account_hash());
+pub static ACCOUNT_1_KEY: Lazy<Key> = Lazy::new(|| Key::Account(*ACCOUNT_1_ADDR));
 
 pub static ACCOUNT_2_SECRET_KEY: Lazy<SecretKey> =
     Lazy::new(|| SecretKey::secp256k1_from_bytes([2u8; 32]).unwrap());
 pub static ACCOUNT_2_PUBLIC_KEY: Lazy<PublicKey> =
     Lazy::new(|| PublicKey::from(&*ACCOUNT_2_SECRET_KEY));
 pub static ACCOUNT_2_ADDR: Lazy<AccountHash> = Lazy::new(|| ACCOUNT_2_PUBLIC_KEY.to_account_hash());
+pub static ACCOUNT_2_KEY: Lazy<Key> = Lazy::new(|| Key::Account(*ACCOUNT_2_ADDR));
 
 pub static ACCOUNT_3_SECRET_KEY: Lazy<SecretKey> =
     Lazy::new(|| SecretKey::secp256k1_from_bytes([3u8; 32]).unwrap());
 pub static ACCOUNT_3_PUBLIC_KEY: Lazy<PublicKey> =
     Lazy::new(|| PublicKey::from(&*ACCOUNT_3_SECRET_KEY));
 pub static ACCOUNT_3_ADDR: Lazy<AccountHash> = Lazy::new(|| ACCOUNT_3_PUBLIC_KEY.to_account_hash());
+pub static ACCOUNT_3_KEY: Lazy<Key> = Lazy::new(|| Key::Account(*ACCOUNT_3_ADDR));
 
-pub static DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_HASH: Lazy<AddressableEntityHash> = Lazy::new(|| {
-    AddressableEntityHash::new(AccountHash::from(&*DEFAULT_ACCOUNT_PUBLIC_KEY).value())
-});
-pub static DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY: Lazy<Key> = Lazy::new(|| {
-    Key::addressable_entity_key(
-        EntityKindTag::Account,
-        *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_HASH,
-    )
-});
-
-pub static ACCOUNT_1_ADDRESSABLE_ENTITY_HASH: Lazy<AddressableEntityHash> =
-    Lazy::new(|| AddressableEntityHash::new(ACCOUNT_1_ADDR.value()));
-pub static ACCOUNT_1_ADDRESSABLE_ENTITY_KEY: Lazy<Key> = Lazy::new(|| {
-    Key::addressable_entity_key(EntityKindTag::Account, *ACCOUNT_1_ADDRESSABLE_ENTITY_HASH)
-});
-
-pub static ACCOUNT_2_ADDRESSABLE_ENTITY_HASH: Lazy<AddressableEntityHash> =
-    Lazy::new(|| AddressableEntityHash::new(ACCOUNT_2_ADDR.value()));
-pub static ACCOUNT_2_ADDRESSABLE_ENTITY_KEY: Lazy<Key> = Lazy::new(|| {
-    Key::addressable_entity_key(EntityKindTag::Account, *ACCOUNT_2_ADDRESSABLE_ENTITY_HASH)
-});
-
-pub static ACCOUNT_3_ADDRESSABLE_ENTITY_HASH: Lazy<AddressableEntityHash> =
-    Lazy::new(|| AddressableEntityHash::new(ACCOUNT_3_ADDR.value()));
-pub static ACCOUNT_3_ADDRESSABLE_ENTITY_KEY: Lazy<Key> = Lazy::new(|| {
-    Key::addressable_entity_key(EntityKindTag::Account, *ACCOUNT_3_ADDRESSABLE_ENTITY_HASH)
-});
+pub static DEFAULT_ACCOUNT_KEY: Lazy<Key> = Lazy::new(|| Key::Account(*DEFAULT_ACCOUNT_ADDR));
 
 pub const PAGE_SIZE: u64 = 1000;
 

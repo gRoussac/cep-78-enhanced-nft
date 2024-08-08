@@ -7,9 +7,8 @@ use contract::constants::{
 
 use crate::utility::{
     constants::{
-        ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
-        MINT_SESSION_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL,
-        TRANSFER_SESSION_WASM,
+        ARG_IS_HASH_IDENTIFIER_MODE, ARG_NFT_CONTRACT_HASH, DEFAULT_ACCOUNT_KEY, MINT_SESSION_WASM,
+        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TRANSFER_SESSION_WASM,
     },
     installer_request_builder::{
         InstallerRequestBuilder, NFTIdentifierMode, NFTMetadataKind, OwnerReverseLookupMode,
@@ -40,7 +39,7 @@ fn mint_cost_should_remain_stable() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => "",
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -54,7 +53,7 @@ fn mint_cost_should_remain_stable() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => "",
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -73,7 +72,7 @@ fn mint_cost_should_remain_stable() {
         MINT_SESSION_WASM,
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
-            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
             ARG_TOKEN_META_DATA => "",
             ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
         },
@@ -112,7 +111,7 @@ fn transfer_costs_should_remain_stable() {
             MINT_SESSION_WASM,
             runtime_args! {
                 ARG_NFT_CONTRACT_HASH => nft_contract_key,
-                ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+                ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
                 ARG_TOKEN_META_DATA => "",
                 ARG_COLLECTION_NAME => NFT_TEST_COLLECTION.to_string()
             },
@@ -140,7 +139,7 @@ fn transfer_costs_should_remain_stable() {
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
             ARG_TARGET_KEY => Key::Account(AccountHash::new([9u8; 32])),
             ARG_TOKEN_ID => 0u64,
         },
@@ -158,7 +157,7 @@ fn transfer_costs_should_remain_stable() {
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
             ARG_TARGET_KEY => Key::Account(AccountHash::new([9u8; 32])),
             ARG_TOKEN_ID => 1u64,
         },
@@ -181,7 +180,7 @@ fn transfer_costs_should_remain_stable() {
         runtime_args! {
             ARG_NFT_CONTRACT_HASH => nft_contract_key,
             ARG_IS_HASH_IDENTIFIER_MODE => false,
-            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+            ARG_SOURCE_KEY => *DEFAULT_ACCOUNT_KEY,
             ARG_TARGET_KEY => Key::Account(AccountHash::new([9u8; 32])),
             ARG_TOKEN_ID => 2u64,
         },

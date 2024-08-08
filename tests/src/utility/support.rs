@@ -290,13 +290,15 @@ fn make_page_dictionary_item_key(token_owner_key: &Key) -> String {
     match token_owner_key {
         Key::Account(token_owner_account_hash) => token_owner_account_hash.to_string(),
         Key::Hash(token_owner_hash_addr) => ContractHash::new(*token_owner_hash_addr).to_string(),
-        Key::AddressableEntity(token_owner_entity_addr) => {
-            match token_owner_entity_addr{
-                EntityAddr::System(_) => panic!("invalid key type"),
-                EntityAddr::Account(hash_addr) => AddressableEntityHash::new(*hash_addr),
-                EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(*hash_addr),
-            }.to_string()},
-        Key::Package(token_owner_package_addr) => PackageHash::new(*token_owner_package_addr).to_string(),
+        Key::AddressableEntity(token_owner_entity_addr) => match token_owner_entity_addr {
+            EntityAddr::System(_) => panic!("invalid key type"),
+            EntityAddr::Account(hash_addr) => AddressableEntityHash::new(*hash_addr),
+            EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(*hash_addr),
+        }
+        .to_string(),
+        Key::Package(token_owner_package_addr) => {
+            PackageHash::new(*token_owner_package_addr).to_string()
+        }
         _ => panic!("invalid key type"),
     }
 }

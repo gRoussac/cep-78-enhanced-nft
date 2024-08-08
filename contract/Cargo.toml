@@ -4,13 +4,13 @@ version = "1.5.1"
 edition = "2021"
 
 [dependencies]
-casper-contract = { git = "https://github.com/casper-network/casper-node.git", branch = "release-2.0.0-rc3", default-features = false }
-casper-types = { git = "https://github.com/casper-network/casper-node.git", branch = "release-2.0.0-rc3", default-features = false }
+casper-contract = { git = "https://github.com/casper-network/casper-node.git", branch = "feat-2.0", default-features = false }
+casper-types = { git = "https://github.com/casper-network/casper-node.git", branch = "feat-2.0", default-features = false }
 serde = { version = "1.0.80", default-features = false }
 serde_json = { version = "1.0.59", default-features = false }
 serde-json-wasm = { version = "1.0.1", default-features = false }
 base16 = { version = "0.2.1", default-features = false }
-casper-event-standard = { git = "https://github.com/deuszex/casper-event-standard.git ", branch = "condor", default-features = false }
+casper-event-standard = { git = "https://github.com/deuszex/casper-event-standard.git", branch = "feat-2.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 
 [[bin]]

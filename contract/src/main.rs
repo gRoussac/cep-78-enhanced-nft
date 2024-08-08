@@ -29,7 +29,12 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    account::AccountHash, addressable_entity::{EntityKindTag, NamedKeys}, contracts::{ContractHash, ContractPackageHash}, runtime_args, AddressableEntityHash, ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, PackageHash, Parameter, RuntimeArgs, Tagged
+    account::AccountHash,
+    addressable_entity::{EntityKindTag, NamedKeys},
+    contracts::{ContractHash, ContractPackageHash},
+    runtime_args, ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess,
+    EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, PackageHash, Parameter,
+    RuntimeArgs, Tagged,
 };
 use constants::{
     ACCESS_KEY_NAME_1_0_0, ACL_PACKAGE_MODE, ACL_WHITELIST, ALLOW_MINTING, APPROVED,
@@ -58,7 +63,6 @@ use constants::{
     TOTAL_TOKEN_SUPPLY, TRANSFER_FILTER_CONTRACT, TRANSFER_FILTER_CONTRACT_METHOD,
     UNMATCHED_HASH_COUNT, WHITELIST_MODE,
 };
-use utils::get_holder_mode;
 use core::convert::{TryFrom, TryInto};
 use error::NFTCoreError;
 use events::{
@@ -74,6 +78,7 @@ use modalities::{
     NFTKind, NFTMetadataKind, NamedKeyConventionMode, OwnerReverseLookupMode, OwnershipMode,
     Requirement, TokenIdentifier, TransferFilterContractResult, WhitelistMode,
 };
+use utils::get_holder_mode;
 
 #[no_mangle]
 pub extern "C" fn init() {
@@ -85,14 +90,14 @@ pub extern "C" fn init() {
     }
 
     // Only the installing account may call this method. All other callers are erroneous.
-    let installing_account = utils::get_account_entity_hash(
+    let installing_account = utils::get_account_hash(
         INSTALLER,
         NFTCoreError::MissingInstaller,
         NFTCoreError::InvalidInstaller,
     );
 
     // We revert if caller is not the managing installing account
-    if installing_account != AddressableEntityHash::new(runtime::get_caller().value()) {
+    if installing_account != runtime::get_caller() {
         runtime::revert(NFTCoreError::InvalidAccount)
     }
 
@@ -492,14 +497,14 @@ pub extern "C" fn init() {
 // set variables defines what variables are mutable and immutable.
 #[no_mangle]
 pub extern "C" fn set_variables() {
-    let installer = utils::get_account_entity_hash(
+    let installer = utils::get_account_hash(
         INSTALLER,
         NFTCoreError::MissingInstaller,
         NFTCoreError::InvalidInstaller,
     );
 
     // Only the installing account can change the mutable variables.
-    if installer != AddressableEntityHash::new(runtime::get_caller().value()) {
+    if installer != runtime::get_caller() {
         runtime::revert(NFTCoreError::InvalidAccount);
     }
 
@@ -662,10 +667,10 @@ pub extern "C" fn mint() {
     .unwrap_or_revert();
 
     let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
-    if let NFTHolderMode::Contracts = get_holder_mode().unwrap_or_revert(){
+    if let NFTHolderMode::Contracts = get_holder_mode().unwrap_or_revert() {
         if let Key::Account(_) = caller {
             revert(NFTCoreError::InvalidHolderMode);
-        }else if let Key::AddressableEntity(EntityAddr::Account(_)) = caller {
+        } else if let Key::AddressableEntity(EntityAddr::Account(_)) = caller {
             revert(NFTCoreError::InvalidHolderMode);
         }
     }
@@ -1134,7 +1139,7 @@ pub extern "C" fn approve() {
             NFTCoreError::MissingSpenderAccountHash,
             NFTCoreError::InvalidSpenderAccountHash,
         )
-        .unwrap_or_revert()
+        .unwrap_or_revert(),
     };
 
     // If token owner or operator tries to approve itself that's probably a mistake and we revert.
@@ -1752,11 +1757,7 @@ pub extern "C" fn owner_of() {
 
     if let NFTIdentifierMode::Ordinal = identifier_mode {
         // Revert if token_id is out of bounds
-        if token_identifier
-            .get_index()
-            .unwrap_or_revert()
-            >= number_of_minted_tokens
-        {
+        if token_identifier.get_index().unwrap_or_revert() >= number_of_minted_tokens {
             runtime::revert(NFTCoreError::InvalidTokenIdentifier);
         }
     }
@@ -2136,9 +2137,7 @@ pub extern "C" fn migrate() {
         .unwrap_or(EventsMode::NoEvents);
 
     if let Some(optional_events_mode) = optional_events_mode {
-        let requested_events_mode: EventsMode = optional_events_mode
-            .try_into()
-            .unwrap_or_revert();
+        let requested_events_mode: EventsMode = optional_events_mode.try_into().unwrap_or_revert();
         match (current_events_mode, requested_events_mode) {
             (EventsMode::CES, EventsMode::CES) => casper_event_standard::emit(Migration::new()),
             (_, EventsMode::CES) => {
@@ -2291,8 +2290,7 @@ pub extern "C" fn register_owner() {
     ]
     .contains(&utils::get_reporting_mode())
     {
-        let owner_key = match utils::get_ownership_mode().unwrap_or_revert()
-        {
+        let owner_key = match utils::get_ownership_mode().unwrap_or_revert() {
             OwnershipMode::Minter => utils::get_verified_caller().0,
             OwnershipMode::Assigned | OwnershipMode::Transferable => {
                 utils::get_named_arg_with_user_errors::<Key>(
@@ -2878,7 +2876,7 @@ fn install_contract() {
 
     let named_keys = {
         let mut named_keys = NamedKeys::new();
-        named_keys.insert(INSTALLER.to_string(), Key::addressable_entity_key(EntityKindTag::Account,AddressableEntityHash::new(runtime::get_caller().value())));
+        named_keys.insert(INSTALLER.to_string(), Key::Account(runtime::get_caller()));
 
         named_keys
     };
@@ -2898,6 +2896,7 @@ fn install_contract() {
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
         Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
     );
+
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
         storage::new_uref(contract_version).into(),

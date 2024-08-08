@@ -18,7 +18,12 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    api_error, bytesrepr::{self, FromBytes, ToBytes}, contracts::ContractHash, system::Caller, AddressableEntityHash, ApiError, CLTyped, Key, PackageHash, URef
+    account::AccountHash,
+    api_error,
+    bytesrepr::{self, FromBytes, ToBytes},
+    contracts::ContractHash,
+    system::CallStackElement,
+    AddressableEntityHash, ApiError, CLTyped, Key, PackageHash, URef,
 };
 
 use crate::{
@@ -84,35 +89,16 @@ pub fn encode_dictionary_item_key(key: Key) -> String {
     match key {
         Key::Account(account_hash) => account_hash.to_string(),
         Key::Hash(hash_addr) => ContractHash::new(hash_addr).to_string(),
-        Key::AddressableEntity(entity) => {
-            match entity {
-                casper_types::EntityAddr::System(_) => runtime::revert(NFTCoreError::InvalidKey),
-                casper_types::EntityAddr::Account(hash_addr) => AddressableEntityHash::new(hash_addr),
-                casper_types::EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(hash_addr),
-            }.to_string()
-        },
+        Key::AddressableEntity(entity) => match entity {
+            casper_types::EntityAddr::System(_) => runtime::revert(NFTCoreError::InvalidKey),
+            casper_types::EntityAddr::Account(hash_addr) => AddressableEntityHash::new(hash_addr),
+            casper_types::EntityAddr::SmartContract(hash_addr) => {
+                AddressableEntityHash::new(hash_addr)
+            }
+        }
+        .to_string(),
         Key::Package(package) => PackageHash::from(package).to_string(),
-        Key::URef(_) => revert(ApiError::User(2001)),
-        Key::Transfer(_) => revert(ApiError::User(2002)),
-        Key::DeployInfo(_) => revert(ApiError::User(2003)),
-        Key::EraInfo(_) => revert(ApiError::User(2004)),
-        Key::Balance(_) => revert(ApiError::User(2005)),
-        Key::Bid(_) => revert(ApiError::User(2006)),
-        Key::Withdraw(_) => revert(ApiError::User(2007)),
-        Key::Dictionary(_) => revert(ApiError::User(2008)),
-        Key::SystemEntityRegistry => revert(ApiError::User(2009)),
-        Key::EraSummary => revert(ApiError::User(2010)),
-        Key::Unbond(_) => revert(ApiError::User(2011)),
-        Key::ChainspecRegistry => revert(ApiError::User(2012)),
-        Key::ChecksumRegistry => revert(ApiError::User(2013)),
-        Key::BidAddr(_) => revert(ApiError::User(2014)),
-        Key::ByteCode(_) => revert(ApiError::User(2015)),
-        Key::Message(_) => revert(ApiError::User(20016)),
-        Key::NamedKey(_) => revert(ApiError::User(20017)),
-        Key::BlockGlobal(_) => revert(ApiError::User(2018)),
-        Key::BalanceHold(_) => revert(ApiError::User(2019)),
-        Key::EntryPoint(_) => revert(ApiError::User(2020)),
-        // _ => runtime::revert(NFTCoreError::InvalidKey),
+        _ => runtime::revert(NFTCoreError::InvalidKey),
     }
 }
 
@@ -211,9 +197,9 @@ pub fn get_named_arg_with_user_errors<T: FromBytes>(
     bytesrepr::deserialize(arg_bytes).map_err(|_| invalid)
 }
 
-pub fn get_account_entity_hash(name: &str, missing: NFTCoreError, invalid: NFTCoreError) -> AddressableEntityHash {
+pub fn get_account_hash(name: &str, missing: NFTCoreError, invalid: NFTCoreError) -> AccountHash {
     let key = get_key_with_user_errors(name, missing, invalid);
-    key.into_entity_hash()
+    key.into_account()
         .unwrap_or_revert_with(NFTCoreError::UnexpectedKeyVariant)
 }
 
@@ -316,28 +302,45 @@ pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     (ptr, size, bytes)
 }
 
-pub fn get_verified_caller() -> (Key, Option<Key>) {
-    use casper_types::EntityAddr;
+/// Returns the call stack.
+pub fn get_call_stack() -> Vec<CallStackElement> {
+    let (call_stack_len, result_size) = {
+        let mut call_stack_len: usize = 0;
+        let mut result_size: usize = 0;
+        let ret = unsafe {
+            ext_ffi::casper_load_call_stack(
+                &mut call_stack_len as *mut usize,
+                &mut result_size as *mut usize,
+            )
+        };
+        api_error::result_from(ret).unwrap_or_revert();
+        (call_stack_len, result_size)
+    };
+    if call_stack_len == 0 {
+        return Vec::new();
+    }
+    let bytes = read_host_buffer(result_size).unwrap_or_revert();
+    bytesrepr::deserialize(bytes).unwrap_or_revert()
+}
 
-    let get_verified_caller: Caller = runtime::get_call_stack()
+pub fn get_verified_caller() -> (Key, Option<Key>) {
+    let call_stack_element = get_call_stack()
         .iter()
         .nth_back(1)
         .to_owned()
         .unwrap_or_revert()
         .clone();
 
-    match get_verified_caller {
-        Caller::Initiator { account_hash } => (
-            Key::AddressableEntity(EntityAddr::Account(account_hash.value())),
-            None,
-        ),
-        Caller::Entity {
-            package_hash,
-            entity_hash,
+    match call_stack_element {
+        CallStackElement::Session { account_hash } => (Key::from(account_hash), None),
+        CallStackElement::StoredContract {
+            contract_package_hash,
+            contract_hash,
         } => (
-            Key::AddressableEntity(EntityAddr::SmartContract(entity_hash.value())),
-            Some(package_hash.into()),
+            Key::from(contract_hash),
+            Some(Key::from(contract_package_hash)),
         ),
+        _ => revert(NFTCoreError::InvalidKey),
     }
 }
 

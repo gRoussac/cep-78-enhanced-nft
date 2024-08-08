@@ -1,5 +1,5 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
-use casper_types::{addressable_entity::EntityKindTag, contracts::ContractHash, runtime_args, Key};
+use casper_types::{addressable_entity::EntityKindTag, runtime_args, Key};
 use contract::{
     constants::{
         ACL_PACKAGE_MODE, ALLOW_MINTING, ARG_ACL_PACKAGE_MODE, ARG_ALLOW_MINTING,
@@ -11,9 +11,7 @@ use contract::{
 };
 
 use crate::utility::{
-    constants::{
-        ACCOUNT_1_ADDR, CONTRACT_NAME, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL,
-    },
+    constants::{ACCOUNT_1_ADDR, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL},
     installer_request_builder::{InstallerRequestBuilder, OwnerReverseLookupMode},
     support::{
         self, assert_expected_error, genesis, get_nft_contract_entity_hash_key,

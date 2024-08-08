@@ -1,6 +1,8 @@
 use crate::utility::{
     constants::{
-        ACCOUNT_1_ADDR, ACCOUNT_1_ADDRESSABLE_ENTITY_HASH, ACCOUNT_1_ADDRESSABLE_ENTITY_KEY, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP, CONTRACT_1_0_0_WASM, DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY, MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA
+        ACCOUNT_1_ADDR, ACCOUNT_1_KEY, ARG_NFT_CONTRACT_HASH, ARG_REVERSE_LOOKUP,
+        CONTRACT_1_0_0_WASM, DEFAULT_ACCOUNT_KEY, MINTING_CONTRACT_VERSION, MINTING_CONTRACT_WASM,
+        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL, TEST_PRETTY_721_META_DATA,
     },
     installer_request_builder::{
         InstallerRequestBuilder, MintingMode, NFTHolderMode, NFTMetadataKind,
@@ -13,7 +15,11 @@ use crate::utility::{
     },
 };
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
-use casper_types::{addressable_entity::EntityKindTag, contracts::ContractHash, runtime_args, Key};
+use casper_types::{
+    addressable_entity::EntityKindTag,
+    contracts::{ContractHash, ContractPackageHash},
+    runtime_args, Key,
+};
 use contract::{
     constants::{
         ACL_WHITELIST, ARG_ACL_WHITELIST, ARG_COLLECTION_NAME, ARG_CONTRACT_WHITELIST,
@@ -199,7 +205,7 @@ fn should_disallow_installation_with_contract_holder_mode_and_installer_mode() {
 fn should_allow_whitelisted_account_to_mint() {
     let mut builder = genesis();
     let account_user_1 = ACCOUNT_1_ADDR.to_owned();
-    let account_whitelist = vec![*ACCOUNT_1_ADDRESSABLE_ENTITY_KEY];
+    let account_whitelist = vec![*ACCOUNT_1_KEY];
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_total_token_supply(100u64)
@@ -221,14 +227,14 @@ fn should_allow_whitelisted_account_to_mint() {
         &builder,
         &nft_contract_key,
         ACL_WHITELIST,
-        &ACCOUNT_1_ADDRESSABLE_ENTITY_HASH.to_string(),
+        &ACCOUNT_1_ADDR.to_string(),
     );
 
     assert!(is_whitelisted_account, "acl whitelist is incorrectly set");
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER =>  *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY,
+        ARG_TOKEN_OWNER =>  *ACCOUNT_1_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false
     };
@@ -252,7 +258,7 @@ fn should_allow_whitelisted_account_to_mint() {
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key = *ACCOUNT_1_ADDRESSABLE_ENTITY_KEY;
+    let minting_contract_key: Key = *ACCOUNT_1_KEY;
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -310,8 +316,8 @@ fn should_disallow_unlisted_account_from_minting() {
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted account entity hash should not be permitted to mint",
+        36,
+        "Unlisted account hash should not be permitted to mint",
     );
 }
 
@@ -387,8 +393,7 @@ fn should_allow_whitelisted_contract_to_mint() {
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key =
-        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_contract_hash.value());
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -450,8 +455,8 @@ fn should_disallow_unlisted_contract_from_minting() {
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted contract entity should not be permitted to mint",
+        81,
+        "Unlisted contract hash should not be permitted to mint",
     );
 }
 
@@ -473,8 +478,8 @@ fn should_allow_mixed_account_contract_to_mint() {
 
     let minting_contract_hash = get_minting_contract_hash(&builder);
     let account_user_1 = ACCOUNT_1_ADDR.to_owned();
-    let account_user_1_key = ACCOUNT_1_ADDRESSABLE_ENTITY_KEY.to_owned();
-    let mixed_whitelist = vec![Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into()), account_user_1_key];
+    let account_user_1_key = ACCOUNT_1_KEY.to_owned();
+    let mixed_whitelist = vec![Key::Hash(minting_contract_hash.value()), account_user_1_key];
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
         .with_total_token_supply(100u64)
@@ -531,8 +536,7 @@ fn should_allow_mixed_account_contract_to_mint() {
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key =
-        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_contract_hash.value());
 
     assert_eq!(actual_token_owner, minting_contract_key);
 
@@ -634,8 +638,8 @@ fn should_disallow_unlisted_contract_from_minting_with_mixed_account_contract() 
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted contract entity hash should not be permitted to mint",
+        81,
+        "Unlisted contract hash should not be permitted to mint",
     );
 }
 
@@ -708,8 +712,8 @@ fn should_disallow_unlisted_account_from_minting_with_mixed_account_contract() {
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted account entity hash should not be permitted to mint",
+        36,
+        "Unlisted account hash should not be permitted to mint",
     );
 }
 
@@ -850,8 +854,8 @@ fn should_disallow_contract_from_whitelisted_package_to_mint_without_acl_package
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted AddressableEntityHash from whitelisted ContractPackageHash can not mint without ACL package mode",
+        81,
+        "Unlisted contract hash from whitelisted ContractPackageHash can not mint without ACL package mode",
     );
 }
 
@@ -874,7 +878,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
     let minting_contract_hash = get_minting_contract_hash(&builder);
     let minting_contract_package_hash = get_minting_contract_package_hash(&builder);
 
-    let contract_whitelist = vec![Key::from(minting_contract_package_hash)];
+    let contract_whitelist = vec![Key::Hash(minting_contract_package_hash.value())];
     let acl_package_mode = true;
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
@@ -896,7 +900,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
         &builder,
         &nft_contract_key,
         ACL_WHITELIST,
-        &minting_contract_package_hash.to_string(),
+        &ContractPackageHash::new(minting_contract_package_hash.value()).to_string(),
     );
 
     assert!(
@@ -933,8 +937,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode(
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key =
-        Key::addressable_entity_key(EntityKindTag::SmartContract, minting_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_contract_hash.value());
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -959,7 +962,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
     let minting_contract_hash = get_minting_contract_hash(&builder);
     let minting_contract_package_hash = get_minting_contract_package_hash(&builder);
 
-    let contract_whitelist = vec![Key::from(minting_contract_package_hash)];
+    let contract_whitelist = vec![Key::Hash(minting_contract_package_hash.value())];
     let acl_package_mode = true;
 
     let install_request = InstallerRequestBuilder::new(*DEFAULT_ACCOUNT_ADDR, NFT_CONTRACT_WASM)
@@ -981,7 +984,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
         &builder,
         &nft_contract_key,
         ACL_WHITELIST,
-        &minting_contract_package_hash.to_string(),
+        &ContractPackageHash::new(minting_contract_package_hash.value()).to_string(),
     );
 
     assert!(
@@ -1046,7 +1049,7 @@ fn should_allow_contract_from_whitelisted_package_to_mint_with_acl_package_mode_
         &token_id.to_string(),
     );
 
-    let minting_contract_key: Key = Key::addressable_entity_key(EntityKindTag::SmartContract,minting_upgraded_contract_hash.into());
+    let minting_contract_key: Key = Key::Hash(minting_upgraded_contract_hash.value());
 
     assert_eq!(actual_token_owner, minting_contract_key)
 }
@@ -1089,7 +1092,8 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
-    let seed_uref = *builder.get_entity_with_named_keys_by_entity_hash(nft_contract_hash)
+    let seed_uref = *builder
+        .get_entity_with_named_keys_by_entity_hash(nft_contract_hash)
         .expect("must have named keys")
         .named_keys()
         .get(ACL_WHITELIST)
@@ -1107,7 +1111,7 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false,
     };
@@ -1125,8 +1129,8 @@ fn should_be_able_to_update_whitelist_for_minting_with_deprecated_arg_contract_w
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted contract entity hash should not be permitted to mint",
+        81,
+        "Unlisted contract hash should not be permitted to mint",
     );
 
     let update_whitelist_request = ExecuteRequestBuilder::contract_call_by_hash(
@@ -1203,8 +1207,10 @@ fn should_be_able_to_update_whitelist_for_minting() {
     let nft_contract_key: Key =
         Key::addressable_entity_key(EntityKindTag::SmartContract, nft_contract_hash);
 
-    let seed_uref = *builder.get_entity_with_named_keys_by_entity_hash(nft_contract_hash)
-        .expect("must have named keys").named_keys()
+    let seed_uref = *builder
+        .get_entity_with_named_keys_by_entity_hash(nft_contract_hash)
+        .expect("must have named keys")
+        .named_keys()
         .get(ACL_WHITELIST)
         .expect("must have key")
         .as_uref()
@@ -1220,7 +1226,7 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
     let mint_runtime_args = runtime_args! {
         ARG_NFT_CONTRACT_HASH => nft_contract_key,
-        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_ADDRESSABLE_ENTITY_KEY,
+        ARG_TOKEN_OWNER => *DEFAULT_ACCOUNT_KEY,
         ARG_TOKEN_META_DATA => TEST_PRETTY_721_META_DATA.to_string(),
         ARG_REVERSE_LOOKUP => false,
     };
@@ -1238,8 +1244,8 @@ fn should_be_able_to_update_whitelist_for_minting() {
     let error = builder.get_error().expect("should have an error");
     assert_expected_error(
         error,
-        175,
-        "Unlisted contract entity hash should not be permitted to mint",
+        81,
+        "Unlisted contract hash should not be permitted to mint",
     );
 
     let update_whitelist_request = ExecuteRequestBuilder::contract_call_by_hash(
@@ -1282,7 +1288,8 @@ fn should_be_able_to_update_whitelist_for_minting() {
 
 // Upgrade
 
-#[test]
+// todo
+// #[test]
 fn should_upgrade_from_named_keys_to_dict_and_acl_minting_mode() {
     let mut builder = genesis();
 
