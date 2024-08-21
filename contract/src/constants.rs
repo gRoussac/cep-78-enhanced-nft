@@ -70,6 +70,7 @@ pub const BURN_MODE: &str = "burn_mode";
 pub const BURNT_TOKENS: &str = "burnt_tokens";
 pub const COLLECTION_NAME: &str = "collection_name";
 pub const COLLECTION_SYMBOL: &str = "collection_symbol";
+pub const CONDOR: &str = "condor";
 pub const CONTRACT_WHITELIST: &str = "contract_whitelist";
 pub const EVENT_TYPE: &str = "event_type";
 pub const EVENTS: &str = "events";

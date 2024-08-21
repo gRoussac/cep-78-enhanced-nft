@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use casper_engine_test_support::{ExecuteRequest, ExecuteRequestBuilder};
 use casper_types::{
     account::AccountHash, bytesrepr::Bytes, contracts::ContractHash, CLValue, Key, RuntimeArgs,
@@ -190,7 +191,7 @@ impl InstallerRequestBuilder {
             .unwrap(),
             additional_required_metadata: CLValue::from_t(Bytes::new()).unwrap(),
             optional_metadata: CLValue::from_t(Bytes::new()).unwrap(),
-            events_mode: CLValue::from_t(EventsMode::All as u8).unwrap(),
+            events_mode: CLValue::from_t(EventsMode::CES as u8).unwrap(),
             transfer_filter_contract: None,
         }
     }
