@@ -471,7 +471,7 @@ pub extern "C" fn init() {
         storage::new_uref(package_operator_mode).into(),
     );
 
-    if vec![
+    if [
         OwnerReverseLookupMode::Complete,
         OwnerReverseLookupMode::TransfersOnly,
     ]
@@ -1654,13 +1654,11 @@ pub extern "C" fn get_approved() {
         runtime::revert(NFTCoreError::PreviouslyBurntToken)
     }
 
-    let maybe_approved = match utils::get_dictionary_value_from_key::<Option<Key>>(
+    let maybe_approved = utils::get_dictionary_value_from_key::<Option<Key>>(
         APPROVED,
         &token_identifier.get_dictionary_item_key(),
-    ) {
-        Some(maybe_approved) => maybe_approved,
-        None => None,
-    };
+    )
+    .unwrap_or(None);
 
     let approved_cl_value = CLValue::from_t(maybe_approved)
         .unwrap_or_revert_with(NFTCoreError::FailedToConvertToCLValue);
@@ -2016,7 +2014,7 @@ pub extern "C" fn updated_receipts() {
 
 #[no_mangle]
 pub extern "C" fn register_owner() {
-    if vec![
+    if [
         OwnerReverseLookupMode::Complete,
         OwnerReverseLookupMode::TransfersOnly,
     ]
