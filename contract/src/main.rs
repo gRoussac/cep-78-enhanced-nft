@@ -1371,12 +1371,8 @@ pub extern "C" fn transfer() {
             }
         }
 
-        let result: TransferFilterContractResult = call_contract::<u8>(
-            filter_contract.into(),
-            TRANSFER_FILTER_CONTRACT_METHOD,
-            args,
-        )
-        .into();
+        let result: TransferFilterContractResult =
+            call_contract::<u8>(filter_contract, TRANSFER_FILTER_CONTRACT_METHOD, args).into();
         if TransferFilterContractResult::DenyTransfer == result {
             revert(NFTCoreError::TransferFilterContractDenied);
         }
