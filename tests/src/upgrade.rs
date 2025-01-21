@@ -39,6 +39,7 @@ pub fn upgrade_v1_5_6_fixture_to_v2_0_0_ee(
         // TODO fix with_enable_addressable_entity ?
         // .with_migrate_legacy_accounts(true)
         // .with_migrate_legacy_contracts(true)
+        //.with_enable_addressable_entity(true)
         .with_activation_point(EraId::new(1))
         .build();
 
