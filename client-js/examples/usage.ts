@@ -21,7 +21,6 @@ import {
   getAccountInfo,
   getAccountNamedKeyValue,
   printHeader,
-  AccountInfo,
 } from "./common";
 
 
@@ -53,22 +52,22 @@ const usage = async () => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  let accountInfo = await getAccountInfo(NODE_URL, FAUCET_KEYS.publicKey) as AccountInfo;
+  let accountInfo = await getAccountInfo(NODE_URL, FAUCET_KEYS.publicKey);
 
   console.log(`\n=====================================\n`);
 
   console.log(`... Account Info: `);
   console.log(JSON.stringify(accountInfo, null, 2));
 
-  const contractHash = await getAccountNamedKeyValue(
+  const contractHash = getAccountNamedKeyValue(
     accountInfo,
     `cep78_contract_hash_my-collection`
-  ) as string;
+  );
 
-  const contractPackageHash = await getAccountNamedKeyValue(
+  const contractPackageHash = getAccountNamedKeyValue(
     accountInfo,
     `cep78_contract_package_my-collection`
-  ) as string;
+  );
 
   console.log(`... Contract Hash: ${contractHash}`);
   console.log(`... Contract Package Hash: ${contractPackageHash}`);
@@ -203,12 +202,12 @@ const usage = async () => {
 
   // Getting new account info to update namedKeys
 
-  accountInfo = await getAccountInfo(NODE_URL, FAUCET_KEYS.publicKey) as AccountInfo;
+  accountInfo = await getAccountInfo(NODE_URL, FAUCET_KEYS.publicKey);
 
-  const storedOwnerValue = await getAccountNamedKeyValue(
+  const storedOwnerValue = getAccountNamedKeyValue(
     accountInfo,
     `stored_owner_of_token`
-  ) as string;
+  );
 
   console.log(".. storedOwnerValue UREF: ", storedOwnerValue);
 
