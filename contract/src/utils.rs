@@ -98,7 +98,7 @@ pub fn encode_dictionary_item_key(key: Key) -> String {
             }
         }
         .to_string(),
-        Key::Package(package) => PackageHash::from(package).to_string(),
+        Key::SmartContract(package_addr) => PackageHash::from(package_addr).to_string(),
         _ => runtime::revert(NFTCoreError::InvalidKey),
     }
 }

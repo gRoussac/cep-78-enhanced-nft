@@ -65,7 +65,7 @@ fn mint_cost_should_remain_stable() {
     // We check only the second and third gas costs as the first mint cost
     // has the additional gas of allocating a whole new page. Thus we ensure
     // that costs once a page has been allocated remain stable.
-    let second_mint_gas_costs = builder.last_exec_gas_cost();
+    let second_mint_gas_costs = builder.last_exec_gas_consumed();
 
     let third_mint_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -81,7 +81,7 @@ fn mint_cost_should_remain_stable() {
 
     builder.exec(third_mint_request).expect_success().commit();
 
-    let third_mint_gas_costs = builder.last_exec_gas_cost();
+    let third_mint_gas_costs = builder.last_exec_gas_consumed();
 
     assert_eq!(second_mint_gas_costs, third_mint_gas_costs);
 }
@@ -172,7 +172,7 @@ fn transfer_costs_should_remain_stable() {
     // We check only the second and third gas costs as the first transfer cost
     // has the additional gas of allocating a whole new page. Thus we ensure
     // that costs once a page has been allocated remain stable.
-    let second_transfer_gas_cost = builder.last_exec_gas_cost();
+    let second_transfer_gas_cost = builder.last_exec_gas_consumed();
 
     let third_transfer_request = ExecuteRequestBuilder::standard(
         *DEFAULT_ACCOUNT_ADDR,
@@ -192,7 +192,7 @@ fn transfer_costs_should_remain_stable() {
         .expect_success()
         .commit();
 
-    let third_transfer_gas_cost = builder.last_exec_gas_cost();
+    let third_transfer_gas_cost = builder.last_exec_gas_consumed();
 
     assert_eq!(second_transfer_gas_cost, third_transfer_gas_cost);
 }
@@ -212,7 +212,7 @@ fn should_cost_less_when_installing_without_reverse_lookup(reporting: OwnerRever
 
     builder.exec(install_request).expect_success().commit();
 
-    let reverse_lookup_gas_cost = builder.last_exec_gas_cost();
+    let reverse_lookup_gas_cost = builder.last_exec_gas_consumed();
 
     let reverse_lookup_hash: Key = support::get_nft_contract_entity_hash_key(&builder);
 
@@ -232,7 +232,7 @@ fn should_cost_less_when_installing_without_reverse_lookup(reporting: OwnerRever
 
     builder.exec(install_request).expect_success().commit();
 
-    let no_lookup_gas_cost = builder.last_exec_gas_cost();
+    let no_lookup_gas_cost = builder.last_exec_gas_consumed();
 
     let no_lookup_hash: Key = support::get_nft_contract_entity_hash_key(&builder);
 

@@ -31,7 +31,7 @@ pub extern "C" fn call() {
         if !runtime::get_named_arg::<bool>(ARG_IS_HASH_IDENTIFIER_MODE) {
             let token_id: u64 = runtime::get_named_arg(ARG_TOKEN_ID);
             runtime::call_contract::<(String, Key)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_TRANSFER,
                 runtime_args! {
                     ARG_TOKEN_ID => token_id,
@@ -42,7 +42,7 @@ pub extern "C" fn call() {
         } else {
             let token_hash: String = runtime::get_named_arg(ARG_TOKEN_HASH);
             runtime::call_contract::<(String, Key)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_TRANSFER,
                 runtime_args! {
                     ARG_TOKEN_HASH => token_hash,

@@ -17,11 +17,11 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    addressable_entity::{EntityKindTag, NamedKeys},
     api_error,
-    contracts::ContractVersion,
-    runtime_args, AddressableEntityHash, ApiError, CLType, EntryPoint, EntryPointAccess,
-    EntryPointPayment, EntryPointType, EntryPoints, Key, PackageHash, Parameter, URef,
+    contracts::{ContractHash, ContractVersion},
+    runtime_args, AddressableEntityHash, ApiError, CLType, EntityAddr, EntryPoint,
+    EntryPointAccess, EntryPointPayment, EntryPointType, EntryPoints, Key, NamedKeys, PackageHash,
+    Parameter, URef,
 };
 
 const CONTRACT_NAME: &str = "minting_contract_hash";
@@ -67,7 +67,7 @@ pub extern "C" fn mint() {
     }
     if reverse_lookup_enabled {
         runtime::call_contract::<(String, URef)>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_REGISTER_OWNER,
             runtime_args! {
                 ARG_TOKEN_OWNER => token_owner,
@@ -76,7 +76,7 @@ pub extern "C" fn mint() {
 
         let (collection_name, owned_tokens_dictionary_key, _token_id_string) =
             runtime::call_contract::<(String, Key, String)>(
-                nft_contract_hash,
+                nft_contract_hash.into(),
                 ENTRY_POINT_MINT,
                 runtime_args! {
                     ARG_TOKEN_HASH => token_hash,
@@ -88,7 +88,7 @@ pub extern "C" fn mint() {
         runtime::put_key(&collection_name, owned_tokens_dictionary_key)
     } else {
         runtime::call_contract::<()>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_MINT,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash,
@@ -110,7 +110,7 @@ pub extern "C" fn approve() {
     let spender_key = runtime::get_named_arg::<Key>(ARG_SPENDER);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_APPROVE,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -129,7 +129,7 @@ pub extern "C" fn revoke() {
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REVOKE,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -149,7 +149,7 @@ pub extern "C" fn transfer() {
     let target_token_owner = runtime::get_named_arg::<Key>(ARG_TARGET_KEY);
 
     let (collection_name, owned_tokens_dictionary_key) = runtime::call_contract::<(String, Key)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_TRANSFER,
         runtime_args! {
             ARG_TOKEN_ID => token_id,
@@ -171,7 +171,7 @@ pub extern "C" fn burn() {
     let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
 
     runtime::call_contract::<()>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_BURN,
         runtime_args! {
             ARG_TOKEN_ID => token_id
@@ -189,7 +189,7 @@ pub extern "C" fn metadata() {
     let metadata: String = if runtime::get_named_arg::<bool>(ARG_IS_HASH_IDENTIFIER_MODE) {
         let token_hash = runtime::get_named_arg::<String>(ARG_TOKEN_HASH);
         runtime::call_contract::<String>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_METADATA,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash
@@ -198,7 +198,7 @@ pub extern "C" fn metadata() {
     } else {
         let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
         runtime::call_contract::<String>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_METADATA,
             runtime_args! {
                 ARG_TOKEN_ID => token_id
@@ -218,7 +218,7 @@ pub extern "C" fn register_contract() {
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
 
     runtime::call_contract::<(String, URef)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner
@@ -226,7 +226,7 @@ pub extern "C" fn register_contract() {
     );
 }
 
-fn install_minting_contract() -> (AddressableEntityHash, ContractVersion) {
+fn install_minting_contract() -> (ContractHash, ContractVersion) {
     let entry_points = get_entry_points();
     let named_keys = named_keys();
     storage::new_contract(
@@ -238,7 +238,7 @@ fn install_minting_contract() -> (AddressableEntityHash, ContractVersion) {
     )
 }
 
-fn upgrade_minting_contract(name: &str) -> (AddressableEntityHash, ContractVersion) {
+fn upgrade_minting_contract(name: &str) -> (ContractHash, ContractVersion) {
     let contract_package_hash: PackageHash = runtime::get_key(name)
         .unwrap_or_revert_with(ApiError::User(1008))
         .into_package_hash()
@@ -246,7 +246,7 @@ fn upgrade_minting_contract(name: &str) -> (AddressableEntityHash, ContractVersi
     let named_keys = named_keys();
     let entry_points = get_entry_points();
     storage::add_contract_version(
-        contract_package_hash,
+        contract_package_hash.into(),
         entry_points,
         named_keys,
         BTreeMap::new(),
@@ -342,7 +342,7 @@ pub extern "C" fn call() {
 
     runtime::put_key(
         CONTRACT_NAME,
-        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
+        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
     );
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }

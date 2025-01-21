@@ -16,10 +16,9 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    addressable_entity::{EntityKindTag, NamedKeys},
-    contracts::ContractVersion,
-    AddressableEntityHash, ApiError, CLType, CLValue, EntryPoint, EntryPointAccess,
-    EntryPointPayment, EntryPointType, EntryPoints, Key, Parameter,
+    contracts::{ContractHash, ContractVersion},
+    ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess, EntryPointPayment,
+    EntryPointType, EntryPoints, Key, NamedKeys, Parameter,
 };
 
 const CONTRACT_NAME: &str = "transfer_filter_contract_hash";
@@ -28,7 +27,7 @@ const HASH_KEY_NAME: &str = "transfer_filter_contract_package_hash";
 const ACCESS_KEY_NAME: &str = "transfer_filter_contract_access_uref";
 const ARG_FILTER_CONTRACT_RETURN_VALUE: &str = "return_value";
 
-fn install_filter_contract() -> (AddressableEntityHash, ContractVersion) {
+fn install_filter_contract() -> (ContractHash, ContractVersion) {
     let can_transfer_entry_point = EntryPoint::new(
         "can_transfer",
         vec![
@@ -102,7 +101,7 @@ pub extern "C" fn call() {
 
     runtime::put_key(
         CONTRACT_NAME,
-        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
+        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
     );
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }

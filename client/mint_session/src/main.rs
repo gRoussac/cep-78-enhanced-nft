@@ -35,7 +35,7 @@ pub extern "C" fn call() {
     }
 
     let (register_name, package_uref) = runtime::call_contract::<(String, URef)>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_REGISTER_OWNER,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner
@@ -45,7 +45,7 @@ pub extern "C" fn call() {
 
     let (receipt_name, owned_tokens_dictionary_key, _token_id_string) =
         runtime::call_contract::<(String, Key, String)>(
-            nft_contract_hash,
+            nft_contract_hash.into(),
             ENTRY_POINT_MINT,
             runtime_args! {
                 ARG_TOKEN_HASH => token_hash,

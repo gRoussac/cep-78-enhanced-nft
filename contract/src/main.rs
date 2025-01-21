@@ -30,11 +30,10 @@ use casper_contract::{
 };
 use casper_types::{
     account::AccountHash,
-    addressable_entity::{EntityKindTag, NamedKeys},
     contract_messages::MessageTopicOperation,
     contracts::{ContractHash, ContractPackageHash},
     runtime_args, ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess,
-    EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, PackageHash, Parameter,
+    EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, NamedKeys, PackageHash, Parameter,
     RuntimeArgs, Tagged,
 };
 use constants::{
@@ -2628,7 +2627,7 @@ fn install_contract() {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
+        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
     );
 
     runtime::put_key(
@@ -2691,7 +2690,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
         .unwrap_or_revert_with(NFTCoreError::MissingPackageHashForUpgrade)
     {
         Key::Hash(hash_addr) => PackageHash::new(hash_addr),
-        Key::Package(package) => PackageHash::new(package),
+        Key::SmartContract(package_addr) => PackageHash::new(package_addr),
         _ => revert(NFTCoreError::InvalidPackageHash),
     };
 
@@ -2716,8 +2715,9 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
 
     let mut message_topics = BTreeMap::new();
     message_topics.insert(EVENTS.to_string(), MessageTopicOperation::Add);
+
     let (contract_hash, contract_version) = storage::add_contract_version(
-        nft_contract_package_hash,
+        nft_contract_package_hash.into(),
         generate_entry_points(),
         NamedKeys::new(),
         message_topics,
@@ -2726,7 +2726,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::addressable_entity_key(EntityKindTag::SmartContract, contract_hash),
+        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),

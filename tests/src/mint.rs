@@ -1345,7 +1345,7 @@ fn should_mint_without_returning_receipts_and_flat_gas_cost() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let first_mint_gas_cost = builder.last_exec_gas_cost();
+    let first_mint_gas_cost = builder.last_exec_gas_consumed();
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1361,7 +1361,7 @@ fn should_mint_without_returning_receipts_and_flat_gas_cost() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let second_mint_gas_cost = builder.last_exec_gas_cost();
+    let second_mint_gas_cost = builder.last_exec_gas_consumed();
 
     let mint_session_call = ExecuteRequestBuilder::contract_call_by_hash(
         *DEFAULT_ACCOUNT_ADDR,
@@ -1377,7 +1377,7 @@ fn should_mint_without_returning_receipts_and_flat_gas_cost() {
 
     builder.exec(mint_session_call).expect_success().commit();
 
-    let third_mint_gas_cost = builder.last_exec_gas_cost();
+    let third_mint_gas_cost = builder.last_exec_gas_consumed();
 
     // In this case there is no first time allocation of a page.
     // Therefore the second and first mints must have equivalent gas costs.
@@ -1833,7 +1833,7 @@ fn should_approve_all_with_flat_gas_cost() {
         .expect_success()
         .commit();
 
-    let first_set_approve_for_all_gas_cost = builder.last_exec_gas_cost();
+    let first_set_approve_for_all_gas_cost = builder.last_exec_gas_consumed();
 
     let is_operator = call_session_code_with_ret::<bool>(
         &mut builder,
@@ -1868,7 +1868,7 @@ fn should_approve_all_with_flat_gas_cost() {
         .expect_success()
         .commit();
 
-    let second_set_approve_for_all_gas_cost = builder.last_exec_gas_cost();
+    let second_set_approve_for_all_gas_cost = builder.last_exec_gas_consumed();
 
     let is_also_operator = call_session_code_with_ret::<bool>(
         &mut builder,

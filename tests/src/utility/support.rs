@@ -312,7 +312,7 @@ fn make_page_dictionary_item_key(token_owner_key: &Key) -> String {
             EntityAddr::SmartContract(hash_addr) => AddressableEntityHash::new(*hash_addr),
         }
         .to_string(),
-        Key::Package(token_owner_package_addr) => {
+        Key::SmartContract(token_owner_package_addr) => {
             PackageHash::new(*token_owner_package_addr).to_string()
         }
         _ => panic!("invalid key type"),

@@ -28,7 +28,7 @@ pub extern "C" fn call() {
     let token_owner: Key = runtime::get_named_arg(ARG_TOKEN_OWNER);
 
     let balance = runtime::call_contract::<u64>(
-        nft_contract_hash,
+        nft_contract_hash.into(),
         ENTRY_POINT_BALANCE_OF,
         runtime_args! {
             ARG_TOKEN_OWNER => token_owner,

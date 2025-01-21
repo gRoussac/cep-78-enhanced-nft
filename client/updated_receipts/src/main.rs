@@ -25,7 +25,7 @@ pub extern "C" fn call() {
     // This value represents a list of receipt names and addresses corresponding
     // to the pages marking ownership of NFTs owned by the account.
     let updated_receipt_data = runtime::call_versioned_contract::<Vec<(String, Key)>>(
-        nft_package_hash,
+        nft_package_hash.into(),
         None,
         ENTRY_POINT_UPDATE_RECEIPTS,
         runtime_args! {},
