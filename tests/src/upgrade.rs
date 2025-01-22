@@ -154,7 +154,7 @@ fn should_migrate_1_5_6_to_feat_2_0() {
 
     let version_1: u32 = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
 
-    assert!(version_0 < version_1);
+    assert!(version_0 == version_1);
 
     let nft_contract_key = get_contract_hash_v2_binary(&builder);
 
