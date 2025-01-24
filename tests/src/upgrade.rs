@@ -134,7 +134,8 @@ fn should_migrate_1_5_6_to_feat_2_0() {
     // upgrade engine
     upgrade_v1_5_6_fixture_to_v2_0_0_ee(&mut builder, &lmdb_fixture_state);
 
-    let version_0: u32 = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
+    let version_0_major: u32 = 1;
+    let version_0_minor: u32 = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
     let contract_package_hash = get_nft_contract_package_hash_cep78(&builder);
 
     // upgrade the contract itself using a binary built for the new engine
@@ -152,9 +153,25 @@ fn should_migrate_1_5_6_to_feat_2_0() {
 
     builder.exec(upgrade_request).expect_success().commit();
 
-    let version_1: u32 = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
+    let version_1_string: String = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
+    // Split into major and minor parts
+    let parts: Vec<&str> = version_1_string.split('.').collect();
 
-    assert!(version_0 == version_1);
+    // Parse the major and minor components
+    let version_1_major: u32 = parts
+        .first()
+        .expect("Failed to get the major version")
+        .parse()
+        .expect("Failed to parse the major version as u32");
+
+    let version_1_minor: u32 = parts
+        .get(1)
+        .unwrap_or(&"0") // Default to "0" if no minor version exists
+        .parse()
+        .expect("Failed to parse the minor version as u32");
+
+    assert!(version_0_major < version_1_major);
+    assert!(version_0_minor == version_1_minor);
 
     let nft_contract_key = get_contract_hash_v2_binary(&builder);
 

@@ -31,7 +31,7 @@ use casper_contract::{
 use casper_types::{
     account::AccountHash,
     contract_messages::MessageTopicOperation,
-    contracts::{ContractHash, ContractPackageHash},
+    contracts::{ContractHash, ContractPackageHash, ContractVersionKey, ProtocolVersionMajor},
     runtime_args, ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess,
     EntryPointPayment, EntryPointType, EntryPoints, Key, KeyTag, NamedKeys, PackageHash, Parameter,
     RuntimeArgs, Tagged,
@@ -59,8 +59,8 @@ use constants::{
     NUMBER_OF_MINTED_TOKENS, OPERATOR, OPERATORS, OPERATOR_BURN_MODE, OWNED_TOKENS, OWNERSHIP_MODE,
     PACKAGE_OPERATOR_MODE, PAGE_LIMIT, PAGE_TABLE, PREFIX_ACCESS_KEY_NAME, PREFIX_CEP78,
     PREFIX_CONTRACT_NAME, PREFIX_CONTRACT_VERSION, PREFIX_HASH_KEY_NAME, PREFIX_PAGE_DICTIONARY,
-    RECEIPT_NAME, REPORTING_MODE, RLO_MFLAG, TOKEN_COUNT, TOKEN_ISSUERS, TOKEN_OWNERS,
-    TOTAL_TOKEN_SUPPLY, TRANSFER_FILTER_CONTRACT, TRANSFER_FILTER_CONTRACT_METHOD,
+    PROTOCOL_VERSION, RECEIPT_NAME, REPORTING_MODE, RLO_MFLAG, TOKEN_COUNT, TOKEN_ISSUERS,
+    TOKEN_OWNERS, TOTAL_TOKEN_SUPPLY, TRANSFER_FILTER_CONTRACT, TRANSFER_FILTER_CONTRACT_METHOD,
     UNMATCHED_HASH_COUNT, WHITELIST_MODE,
 };
 use core::convert::TryInto;
@@ -2612,9 +2612,14 @@ fn install_contract() {
         Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
     );
 
+    let contract_version_key = ContractVersionKey::new(
+        ProtocolVersionMajor::from(PROTOCOL_VERSION),
+        contract_version,
+    );
+
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
-        storage::new_uref(contract_version).into(),
+        storage::new_uref(contract_version_key.to_string()).into(),
     );
 
     let nft_contract_package_hash: PackageHash = runtime::get_key(&hash_key_name)
@@ -2705,6 +2710,11 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
         message_topics,
     );
 
+    let contract_version_key = ContractVersionKey::new(
+        ProtocolVersionMajor::from(PROTOCOL_VERSION),
+        contract_version,
+    );
+
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
@@ -2712,7 +2722,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
-        storage::new_uref(contract_version).into(),
+        storage::new_uref(contract_version_key.to_string()).into(),
     );
 
     let events_mode = utils::get_optional_named_arg_with_user_errors::<u8>(
