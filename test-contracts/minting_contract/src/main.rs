@@ -19,9 +19,8 @@ use casper_contract::{
 use casper_types::{
     api_error,
     contracts::{ContractHash, ContractVersion},
-    runtime_args, AddressableEntityHash, ApiError, CLType, EntityAddr, EntryPoint,
-    EntryPointAccess, EntryPointPayment, EntryPointType, EntryPoints, Key, NamedKeys, PackageHash,
-    Parameter, URef,
+    runtime_args, AddressableEntityHash, ApiError, CLType, EntryPoint, EntryPointAccess,
+    EntryPointPayment, EntryPointType, EntryPoints, Key, NamedKeys, PackageHash, Parameter, URef,
 };
 
 const CONTRACT_NAME: &str = "minting_contract_hash";
@@ -342,7 +341,7 @@ pub extern "C" fn call() {
 
     runtime::put_key(
         CONTRACT_NAME,
-        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
+        Key::contract_entity_key(contract_hash.into()),
     );
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }

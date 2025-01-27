@@ -17,8 +17,8 @@ use casper_contract::{
 };
 use casper_types::{
     contracts::{ContractHash, ContractVersion},
-    ApiError, CLType, CLValue, EntityAddr, EntryPoint, EntryPointAccess, EntryPointPayment,
-    EntryPointType, EntryPoints, Key, NamedKeys, Parameter,
+    ApiError, CLType, CLValue, EntryPoint, EntryPointAccess, EntryPointPayment, EntryPointType,
+    EntryPoints, Key, NamedKeys, Parameter,
 };
 
 const CONTRACT_NAME: &str = "transfer_filter_contract_hash";
@@ -101,7 +101,7 @@ pub extern "C" fn call() {
 
     runtime::put_key(
         CONTRACT_NAME,
-        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
+        Key::contract_entity_key(contract_hash.into()),
     );
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }

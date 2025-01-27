@@ -2609,7 +2609,7 @@ fn install_contract() {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
+        Key::contract_entity_key(contract_hash.into()),
     );
 
     let contract_version_key = ContractVersionKey::new(
@@ -2718,7 +2718,7 @@ fn migrate_contract(access_key_name: String, package_key_name: String) {
     // Store contract_hash and contract_version under the keys CONTRACT_NAME and CONTRACT_VERSION
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_NAME}_{collection_name}"),
-        Key::AddressableEntity(EntityAddr::SmartContract(contract_hash.value())),
+        Key::contract_entity_key(contract_hash.into()),
     );
     runtime::put_key(
         &format!("{PREFIX_CONTRACT_VERSION}_{collection_name}"),
