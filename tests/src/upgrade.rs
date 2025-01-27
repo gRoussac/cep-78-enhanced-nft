@@ -3,8 +3,7 @@ use casper_engine_test_support::{
 };
 use casper_fixtures::LmdbFixtureState;
 use casper_types::{
-    bytesrepr::FromBytes, runtime_args, system::MINT, AddressableEntityHash, CLTyped, EraId, Key,
-    ProtocolVersion,
+    runtime_args, system::MINT, AddressableEntityHash, EraId, Key, ProtocolVersion,
 };
 use contract::{
     constants::{
@@ -17,9 +16,9 @@ use contract::{
 use crate::utility::{
     constants::{
         ARG_NFT_CONTRACT_HASH, ARG_NFT_CONTRACT_PACKAGE_HASH, CONTRACT_NAME, CONTRACT_VERSION,
-        NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
+        DEFAULT_ACCOUNT_KEY, NFT_CONTRACT_WASM, NFT_TEST_COLLECTION,
     },
-    support::get_nft_contract_package_hash_cep78,
+    support::{get_nft_contract_package_hash_cep78, query_stored_value},
 };
 
 pub fn upgrade_v1_5_6_fixture_to_v2_0_0_ee(
@@ -53,20 +52,6 @@ pub fn upgrade_v1_5_6_fixture_to_v2_0_0_ee(
         builder.get_post_state_hash(),
         lmdb_fixture_state.post_state_hash
     );
-}
-
-pub fn query_contract_value<T: CLTyped + FromBytes>(
-    builder: &LmdbWasmTestBuilder,
-    path: &[String],
-) -> T {
-    builder
-        .query(None, Key::Account(*DEFAULT_ACCOUNT_ADDR), path)
-        .unwrap()
-        .as_cl_value()
-        .unwrap()
-        .clone()
-        .into_t()
-        .unwrap()
 }
 
 // the difference between the two is that in v1_binary the contract hash is fetched at [u8;32], while in v2_binary it is an AddressaleEntityHash
@@ -135,7 +120,7 @@ fn should_migrate_1_5_6_to_feat_2_0() {
     upgrade_v1_5_6_fixture_to_v2_0_0_ee(&mut builder, &lmdb_fixture_state);
 
     let version_0_major: u32 = 1;
-    let version_0_minor: u32 = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
+    let version_0_minor: u32 = query_stored_value(&builder, *DEFAULT_ACCOUNT_KEY, CONTRACT_VERSION);
     let contract_package_hash = get_nft_contract_package_hash_cep78(&builder);
 
     // upgrade the contract itself using a binary built for the new engine
@@ -153,7 +138,9 @@ fn should_migrate_1_5_6_to_feat_2_0() {
 
     builder.exec(upgrade_request).expect_success().commit();
 
-    let version_1_string: String = query_contract_value(&builder, &[CONTRACT_VERSION.to_string()]);
+    let version_1_string: String =
+        query_stored_value(&builder, *DEFAULT_ACCOUNT_KEY, CONTRACT_VERSION);
+
     // Split into major and minor parts
     let parts: Vec<&str> = version_1_string.split('.').collect();
 
