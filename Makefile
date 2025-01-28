@@ -70,7 +70,7 @@ lint: clippy format
 
 .PHONY: format
 format:
-$(foreach crate, $(ALL_CRATES), cargo +$(PINNED_TOOLCHAIN) fmt -p $(crate);)
+	$(foreach crate, $(ALL_CRATES), cargo +$(PINNED_TOOLCHAIN) fmt -p $(crate);)
 	cargo fmt -p tests
 
 .PHONY: clean
