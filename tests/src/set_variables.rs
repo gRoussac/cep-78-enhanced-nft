@@ -1,6 +1,6 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{runtime_args, Key};
-use contract::{
+use cep78::{
     constants::{
         ACL_PACKAGE_MODE, ALLOW_MINTING, ARG_ACL_PACKAGE_MODE, ARG_ALLOW_MINTING,
         ARG_OPERATOR_BURN_MODE, ARG_PACKAGE_OPERATOR_MODE, ENTRY_POINT_SET_VARIABLES,

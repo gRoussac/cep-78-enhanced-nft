@@ -1,6 +1,6 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{account::AccountHash, runtime_args, Key};
-use contract::constants::{
+use cep78::constants::{
     ARG_COLLECTION_NAME, ARG_SOURCE_KEY, ARG_TARGET_KEY, ARG_TOKEN_ID, ARG_TOKEN_META_DATA,
     ARG_TOKEN_OWNER, ENTRY_POINT_REGISTER_OWNER,
 };

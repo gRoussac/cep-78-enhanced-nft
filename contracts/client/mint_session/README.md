@@ -7,13 +7,13 @@ If the account has been registered, then the session code will invoke the `mint`
 ## Compiling session code
 
 The session code can be compiled to Wasm by running the `make build-contract` command provided in the Makefile at the top level.
-The Wasm will be found in the `client/mint_session/target/wasm32-unknown-unknown/release` as `mint_call.wasm`.
+The Wasm will be found in the `client/mint_session/target/wasm32-unknown-unknown/release` as `mint_session.wasm`.
 
 ## Usage
 
 The `mint_call` session code takes in the following required runtime arguments.
 
-* `nft_contract_hash`: The hash of a given Enhanced NFT contract passed in as a `Key`.
-* `token_owner`: The `Key` of the owner for the NFT to be minted. Note, this argument is ignored in the `Ownership::Minter` mode.
-* `token_meta_data`: The metadata describing the NFT to be minted, passed in as a `String`.
-* `collection_name`: The name of the NFT collection that the minted token belongs to.
+- `nft_contract_hash`: The hash of a given Enhanced NFT contract passed in as a `Key`.
+- `token_owner`: The `Key` of the owner for the NFT to be minted. Note, this argument is ignored in the `Ownership::Minter` mode.
+- `token_meta_data`: The metadata describing the NFT to be minted, passed in as a `String`.
+- `collection_name`: The name of the NFT collection that the minted token belongs to.

@@ -4,7 +4,7 @@ use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_event_standard::EVENTS_DICT;
 use casper_types::{addressable_entity::EntityKindTag, runtime_args, AddressableEntityHash, Key};
 
-use contract::{
+use cep78::{
     constants::{
         APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_OPERATOR, ARG_SOURCE_KEY, ARG_SPENDER,
         ARG_TARGET_KEY, ARG_TOKEN_HASH, ARG_TOKEN_ID, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, BURNER,

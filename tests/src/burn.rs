@@ -18,7 +18,7 @@ use casper_types::{
     contracts::{ContractHash, ContractPackageHash},
     runtime_args, Key,
 };
-use contract::{
+use cep78::{
     constants::{
         ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_OPERATOR, ARG_TOKEN_HASH, ARG_TOKEN_ID,
         ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER, BURNT_TOKENS, BURN_MODE, ENTRY_POINT_BURN,

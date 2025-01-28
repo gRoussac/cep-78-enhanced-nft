@@ -5,7 +5,7 @@ use casper_fixtures::LmdbFixtureState;
 use casper_types::{
     runtime_args, system::MINT, AddressableEntityHash, EraId, Key, ProtocolVersion,
 };
-use contract::{
+use cep78::{
     constants::{
         ARG_COLLECTION_NAME, ARG_EVENTS_MODE, ARG_NAMED_KEY_CONVENTION, ARG_TOKEN_META_DATA,
         ARG_TOKEN_OWNER,

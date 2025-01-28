@@ -7,7 +7,7 @@ NFT itself. It returns `Some(Key)` if there is an approved spender, `None` if th
 ## Compiling session code
 
 The session code can be compiled to Wasm by running the `make build-contract` command provided in the Makefile at the top level.
-The Wasm will be found in the `client/get_approved_session/target/wasm32-unknown-unknown/release` as `get_approved_call.wasm`.
+The Wasm will be found in the `client/get_approved_session/target/wasm32-unknown-unknown/release` as `get_approved_session.wasm`.
 
 ## Usage
 

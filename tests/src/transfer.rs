@@ -6,7 +6,7 @@ use casper_types::{
     account::AccountHash, addressable_entity::EntityKindTag, contracts::ContractHash, runtime_args,
     Key,
 };
-use contract::{
+use cep78::{
     constants::{
         ACL_WHITELIST, APPROVED, ARG_APPROVE_ALL, ARG_COLLECTION_NAME, ARG_OPERATOR,
         ARG_SOURCE_KEY, ARG_SPENDER, ARG_TARGET_KEY, ARG_TOKEN_HASH, ARG_TOKEN_ID,

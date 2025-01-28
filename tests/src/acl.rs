@@ -22,7 +22,7 @@ use casper_types::{
     contracts::{ContractHash, ContractPackageHash},
     runtime_args, Key,
 };
-use contract::constants::{
+use cep78::constants::{
     ACL_WHITELIST, ARG_ACL_WHITELIST, ARG_CONTRACT_WHITELIST, ARG_TOKEN_META_DATA, ARG_TOKEN_OWNER,
     ENTRY_POINT_MINT, ENTRY_POINT_SET_VARIABLES, TOKEN_OWNERS,
 };

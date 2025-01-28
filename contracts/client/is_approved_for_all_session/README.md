@@ -7,7 +7,7 @@ NFT itself as an approved account. An operator can also transfer any token on be
 ## Compiling session code
 
 The session code can be compiled to Wasm by running the `make build-contract` command provided in the Makefile at the top level.
-The Wasm will be found in the `client/is_approved_for_all_session/target/wasm32-unknown-unknown/release` as `is_approved_for_all_call.wasm`.
+The Wasm will be found in the `client/is_approved_for_all_session/target/wasm32-unknown-unknown/release` as `is_approved_for_all_session.wasm`.
 
 ## Usage
 

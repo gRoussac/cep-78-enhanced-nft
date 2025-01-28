@@ -1,7 +1,7 @@
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_event_standard::{Schemas, EVENTS_SCHEMA};
 use casper_types::{contracts::ContractHash, runtime_args, CLValue, Key};
-use contract::{
+use cep78::{
     constants::{
         ACL_WHITELIST, ARG_ALLOW_MINTING, ARG_COLLECTION_NAME, ARG_COLLECTION_SYMBOL,
         ARG_HOLDER_MODE, ARG_MINTING_MODE, ARG_TOTAL_TOKEN_SUPPLY, ARG_WHITELIST_MODE,

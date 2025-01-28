@@ -2,7 +2,7 @@ use core::panic;
 
 use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{account::AccountHash, contracts::ContractHash, runtime_args, Key};
-use contract::{
+use cep78::{
     constants::{
         ACL_WHITELIST, ARG_COLLECTION_NAME, ARG_TOKEN_HASH, ARG_TOKEN_ID, ARG_TOKEN_META_DATA,
         ARG_TOKEN_OWNER, ENTRY_POINT_METADATA, ENTRY_POINT_MINT, ENTRY_POINT_SET_TOKEN_METADATA,

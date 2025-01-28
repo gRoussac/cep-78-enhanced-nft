@@ -18,9 +18,7 @@ use casper_engine_test_support::{
     utils::create_run_genesis_request, ChainspecConfig, ExecuteRequestBuilder, LmdbWasmTestBuilder,
     DEFAULT_ACCOUNT_ADDR, DEFAULT_ACCOUNT_PUBLIC_KEY,
 };
-
 use casper_execution_engine::{engine_state::Error as EngineStateError, execution::ExecError};
-
 use casper_types::{
     account::AccountHash,
     addressable_entity::EntityKindTag,
@@ -29,8 +27,9 @@ use casper_types::{
     AddressableEntityHash, ApiError, CLTyped, CLValueError, EntityAddr, GenesisAccount, Key, Motes,
     PackageHash, RuntimeArgs, URef, BLAKE2B_DIGEST_LENGTH, U512,
 };
-use contract::constants::{HASH_KEY_NAME_1_0_0, INDEX_BY_HASH, PREFIX_PAGE_DICTIONARY};
+use cep78::constants::{HASH_KEY_NAME_1_0_0, INDEX_BY_HASH, PREFIX_PAGE_DICTIONARY};
 use rand::prelude::*;
+use rand::random;
 use serde::{Deserialize, Serialize};
 use sha256::digest;
 use std::fmt::Debug;
