@@ -648,7 +648,7 @@ pub extern "C" fn mint() {
     .try_into()
     .unwrap_or_revert();
 
-    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_immediate_caller();
     if let NFTHolderMode::Contracts = get_holder_mode().unwrap_or_revert() {
         if let Key::Account(_) = caller {
             revert(NFTCoreError::InvalidHolderMode);
@@ -880,7 +880,7 @@ pub extern "C" fn burn() {
 
     let token_identifier = utils::get_token_identifier_from_runtime_args(&identifier_mode);
 
-    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_immediate_caller();
 
     let token_owner = match utils::get_dictionary_value_from_key::<Key>(
         TOKEN_OWNERS,
@@ -982,7 +982,7 @@ pub extern "C" fn approve() {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
 
-    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_immediate_caller();
 
     let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
         IDENTIFIER_MODE,
@@ -1097,7 +1097,7 @@ pub extern "C" fn revoke() {
         runtime::revert(NFTCoreError::InvalidOwnershipMode)
     }
 
-    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_immediate_caller();
 
     let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
         IDENTIFIER_MODE,
@@ -1205,7 +1205,7 @@ pub extern "C" fn set_approval_for_all() {
     )
     .unwrap_or_revert();
 
-    let (caller, _): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, _): (Key, Option<Key>) = utils::get_immediate_caller();
 
     let operator = utils::get_named_arg_with_user_errors::<Key>(
         ARG_OPERATOR,
@@ -1306,7 +1306,7 @@ pub extern "C" fn transfer() {
         runtime::revert(NFTCoreError::InvalidAccount);
     }
 
-    let (caller, contract_package): (Key, Option<Key>) = utils::get_verified_caller();
+    let (caller, contract_package): (Key, Option<Key>) = utils::get_immediate_caller();
 
     // Check if caller is owner
     let is_owner = owner == caller;
@@ -1692,7 +1692,7 @@ pub extern "C" fn set_token_metadata() {
     );
 
     if let Some(token_owner_key) = token_owner {
-        let (caller, _): (Key, Option<Key>) = utils::get_verified_caller();
+        let (caller, _): (Key, Option<Key>) = utils::get_immediate_caller();
         if caller != token_owner_key {
             runtime::revert(NFTCoreError::InvalidTokenOwner)
         }
@@ -1957,7 +1957,7 @@ pub extern "C" fn migrate() {
 #[no_mangle]
 pub extern "C" fn updated_receipts() {
     if let OwnerReverseLookupMode::Complete = utils::get_reporting_mode() {
-        let (caller, _): (Key, Option<Key>) = utils::get_verified_caller();
+        let (caller, _): (Key, Option<Key>) = utils::get_immediate_caller();
 
         let identifier_mode: NFTIdentifierMode = utils::get_stored_value_with_user_errors::<u8>(
             IDENTIFIER_MODE,
@@ -2008,7 +2008,7 @@ pub extern "C" fn register_owner() {
     .contains(&utils::get_reporting_mode())
     {
         let owner_key = match utils::get_ownership_mode().unwrap_or_revert() {
-            OwnershipMode::Minter => utils::get_verified_caller().0,
+            OwnershipMode::Minter => utils::get_immediate_caller().0,
             OwnershipMode::Assigned | OwnershipMode::Transferable => {
                 utils::get_named_arg_with_user_errors::<Key>(
                     ARG_TOKEN_OWNER,
