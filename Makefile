@@ -85,4 +85,4 @@ clean:
 .PHONY: cargo-update
 cargo-update:
 	$(foreach crate, $(ALL_CRATES), cargo update -p $(crate);)
-	cargo clean -p tests
+	cargo update -p tests
