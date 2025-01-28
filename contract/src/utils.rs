@@ -12,7 +12,7 @@ use core::{convert::TryInto, mem::MaybeUninit};
 use casper_contract::{
     contract_api::{
         self,
-        runtime::{self, revert},
+        runtime::{self},
         storage,
     },
     ext_ffi,
@@ -103,7 +103,7 @@ pub fn encode_dictionary_item_key(key: Key) -> String {
     }
 }
 
-pub fn encode_key_and_value<T: CLTyped + ToBytes>(key: &Key, value: &T) -> String {
+pub fn make_dictionary_item_key<T: CLTyped + ToBytes>(key: &Key, value: &T) -> String {
     let mut bytes_a = key.to_bytes().unwrap_or_revert_with(ApiError::User(302));
     let mut bytes_b = value.to_bytes().unwrap_or_revert_with(ApiError::User(303));
 
@@ -274,7 +274,20 @@ pub fn read_with_user_errors<T: CLTyped + FromBytes>(
     bytesrepr::deserialize(value_bytes).unwrap_or_revert_with(invalid)
 }
 
-pub fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
+// TODO CHECK *runtime::get_call_stack()
+fn read_host_buffer(size: usize) -> Result<Vec<u8>, ApiError> {
+    let mut dest: Vec<u8> = if size == 0 {
+        Vec::new()
+    } else {
+        let bytes_non_null_ptr = contract_api::alloc_bytes(size);
+        unsafe { Vec::from_raw_parts(bytes_non_null_ptr.as_ptr(), size, size) }
+    };
+    read_host_buffer_into(&mut dest)?;
+    Ok(dest)
+}
+
+// TODO CHECK *runtime::get_call_stack()
+fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
     let mut bytes_written = MaybeUninit::uninit();
     let ret = unsafe {
         ext_ffi::casper_read_host_buffer(dest.as_mut_ptr(), dest.len(), bytes_written.as_mut_ptr())
@@ -286,17 +299,6 @@ pub fn read_host_buffer_into(dest: &mut [u8]) -> Result<usize, ApiError> {
     Ok(unsafe { bytes_written.assume_init() })
 }
 
-pub fn read_host_buffer(size: usize) -> Result<Vec<u8>, ApiError> {
-    let mut dest: Vec<u8> = if size == 0 {
-        Vec::new()
-    } else {
-        let bytes_non_null_ptr = contract_api::alloc_bytes(size);
-        unsafe { Vec::from_raw_parts(bytes_non_null_ptr.as_ptr(), size, size) }
-    };
-    read_host_buffer_into(&mut dest)?;
-    Ok(dest)
-}
-
 pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     let bytes = t.into_bytes().unwrap_or_revert_with(ApiError::User(304));
     let ptr = bytes.as_ptr();
@@ -304,7 +306,7 @@ pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
     (ptr, size, bytes)
 }
 
-/// Returns the call stack.
+// TODO CHECK *runtime::get_call_stack()
 pub fn get_call_stack() -> Vec<CallStackElement> {
     let (call_stack_len, result_size) = {
         let mut call_stack_len: usize = 0;
@@ -325,24 +327,25 @@ pub fn get_call_stack() -> Vec<CallStackElement> {
     bytesrepr::deserialize(bytes).unwrap_or_revert()
 }
 
-pub fn get_verified_caller() -> (Key, Option<Key>) {
-    let call_stack_element = get_call_stack()
+pub fn get_immediate_caller() -> (Key, Option<Key>) {
+    //! TODO GR
+    // CHECK *runtime::get_call_stack() // get_immediate_caller() CallerInfo into Key (Caller ?)
+    match *get_call_stack()
         .iter()
         .nth_back(1)
         .to_owned()
         .unwrap_or_revert()
-        .clone();
-
-    match call_stack_element {
+    {
         CallStackElement::Session { account_hash } => (Key::from(account_hash), None),
+        CallStackElement::StoredSession {
+            account_hash: _, // Caller is contract
+            contract_package_hash,
+            contract_hash,
+        } => (contract_hash.into(), Some(contract_package_hash.into())),
         CallStackElement::StoredContract {
             contract_package_hash,
             contract_hash,
-        } => (
-            Key::from(contract_hash),
-            Some(Key::from(contract_package_hash)),
-        ),
-        _ => revert(NFTCoreError::InvalidKey),
+        } => (contract_hash.into(), Some(contract_package_hash.into())),
     }
 }
 

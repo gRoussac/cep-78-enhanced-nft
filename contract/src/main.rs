@@ -895,7 +895,7 @@ pub extern "C" fn burn() {
 
     // Check if caller is operator to execute burn
     let is_operator = if !is_owner {
-        let owner_operator_item_key = utils::encode_key_and_value(&token_owner, &caller);
+        let owner_operator_item_key = utils::make_dictionary_item_key(&token_owner, &caller);
         utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
             .unwrap_or_default()
     } else {
@@ -914,7 +914,7 @@ pub extern "C" fn burn() {
         ) {
             (true, Some(contract_package)) => {
                 let owner_operator_item_key =
-                    utils::encode_key_and_value(&token_owner, &contract_package);
+                    utils::make_dictionary_item_key(&token_owner, &contract_package);
                 utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
                     .unwrap_or_default()
             }
@@ -1024,7 +1024,7 @@ pub extern "C" fn approve() {
     let is_operator = !is_owner
         && utils::get_dictionary_value_from_key::<bool>(
             OPERATORS,
-            &utils::encode_key_and_value(&owner, &caller),
+            &utils::make_dictionary_item_key(&owner, &caller),
         )
         .unwrap_or_default();
 
@@ -1039,7 +1039,7 @@ pub extern "C" fn approve() {
         ) {
             (true, Some(contract_package)) => {
                 let owner_operator_item_key =
-                    utils::encode_key_and_value(&owner, &contract_package);
+                    utils::make_dictionary_item_key(&owner, &contract_package);
                 utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
                     .unwrap_or_default()
             }
@@ -1139,7 +1139,7 @@ pub extern "C" fn revoke() {
     let is_operator = !is_owner
         && utils::get_dictionary_value_from_key::<bool>(
             OPERATORS,
-            &utils::encode_key_and_value(&owner, &caller),
+            &utils::make_dictionary_item_key(&owner, &caller),
         )
         .unwrap_or_default();
 
@@ -1154,7 +1154,7 @@ pub extern "C" fn revoke() {
         ) {
             (true, Some(contract_package)) => {
                 let owner_operator_item_key =
-                    utils::encode_key_and_value(&owner, &contract_package);
+                    utils::make_dictionary_item_key(&owner, &contract_package);
                 utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
                     .unwrap_or_default()
             }
@@ -1220,7 +1220,7 @@ pub extern "C" fn set_approval_for_all() {
     }
 
     // Depending on approve_all we either approve all or disapprove all.
-    let owner_operator_item_key = utils::encode_key_and_value(&caller, &operator);
+    let owner_operator_item_key = utils::make_dictionary_item_key(&caller, &operator);
     utils::upsert_dictionary_value_from_key(OPERATORS, &owner_operator_item_key, approve_all);
 
     if approve_all {
@@ -1247,7 +1247,7 @@ pub extern "C" fn is_approved_for_all() {
     )
     .unwrap_or_revert();
 
-    let owner_operator_item_key = utils::encode_key_and_value(&owner_key, &operator);
+    let owner_operator_item_key = utils::make_dictionary_item_key(&owner_key, &operator);
 
     let is_operator =
         utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
@@ -1323,7 +1323,7 @@ pub extern "C" fn transfer() {
 
     // Check if caller is operator to execute transfer
     let is_operator = if !is_owner && !is_approved {
-        let owner_operator_item_key = utils::encode_key_and_value(&source_owner_key, &caller);
+        let owner_operator_item_key = utils::make_dictionary_item_key(&source_owner_key, &caller);
         utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
             .unwrap_or_default()
     } else {
@@ -1343,7 +1343,7 @@ pub extern "C" fn transfer() {
         ) {
             (true, Some(contract_package)) => {
                 let owner_operator_item_key =
-                    utils::encode_key_and_value(&source_owner_key, &contract_package);
+                    utils::make_dictionary_item_key(&source_owner_key, &contract_package);
                 utils::get_dictionary_value_from_key::<bool>(OPERATORS, &owner_operator_item_key)
                     .unwrap_or_default()
             }
