@@ -14,7 +14,7 @@ VERSIONS :=
 
 # Helper macros
 define build_and_strip
-	RUSTFLAGS="$(RUSTFLAGS)" cargo build --release --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -p $1 ;
+	RUSTFLAGS="$(RUSTFLAGS)" cargo +$(PINNED_TOOLCHAIN) build --release --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -p $1 ;
 	wasm-strip $(WASM_TARGET_DIR)/$1.wasm ;
 endef
 
@@ -54,17 +54,15 @@ test: setup-test
 
 .PHONY: clippy
 clippy:
-	cargo clippy --release  -p cep78 --bins --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -- -D warnings
-	cargo clippy --release  -p cep78 --lib --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -- -D warnings
+	cargo +$(PINNED_TOOLCHAIN) clippy --release -p cep78 --lib --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -- -D warnings
 	$(foreach crate, $(ALL_CRATES), \
-		cargo clippy --release  -p $(crate) --bins --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -- -D warnings; \
+		cargo +$(PINNED_TOOLCHAIN) clippy --release -p $(crate) --bins --target wasm32-unknown-unknown $(CARGO_BUILD_FLAGS) -- -D warnings; \
 	)
-
-	cargo clippy --release -p tests --all-targets $(CARGO_BUILD_FLAGS) -- -D warnings
+	cargo clippy --release -p tests --all-targets -- -D warnings
 
 .PHONY: check-lint
 check-lint: clippy
-	$(foreach crate, $(ALL_CRATES), cargo fmt -p $(crate) -- --check;)
+	$(foreach crate, $(ALL_CRATES), cargo +$(PINNED_TOOLCHAIN) fmt -p $(crate) -- --check;)
 	cargo fmt -p tests -- --check
 
 .PHONY: lint
@@ -72,7 +70,7 @@ lint: clippy format
 
 .PHONY: format
 format:
-	$(foreach crate, $(ALL_CRATES), cargo fmt -p $(crate);)
+$(foreach crate, $(ALL_CRATES), cargo +$(PINNED_TOOLCHAIN) fmt -p $(crate);)
 	cargo fmt -p tests
 
 .PHONY: clean
