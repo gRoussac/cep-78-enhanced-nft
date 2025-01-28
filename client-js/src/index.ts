@@ -11,7 +11,6 @@ import {
   CLValueBuilder,
   CLU8,
 } from "casper-js-sdk";
-
 import {
   CallConfig,
   InstallArgs,
@@ -38,15 +37,15 @@ import {
   StoreOwnerOfArgs,
   OwnerReverseLookupMode,
 } from "./types";
-
-import ContractBinary from "../wasm/contract.wasm";
+import ContractBinary from "../wasm/cep78.wasm";
 import MintBinary from "../wasm/mint_session.wasm";
 import TransferBinary from "../wasm/transfer_session.wasm";
 import BalanceOfBinary from "../wasm/balance_of_session.wasm";
 import OwnerOfBinary from "../wasm/owner_of_session.wasm";
 import GetApprovedBinary from "../wasm/get_approved_session.wasm";
 import UpdatedReceiptsBinary from "../wasm/updated_receipts.wasm";
-import isApprovedForAllSessionBinary from "../wasm/is_approved_for_all_session.wasm";
+// TODO GR
+// import isApprovedForAllSessionBinary from "../wasm/is_approved_for_all_session.wasm";
 
 const { Contract } = Contracts;
 

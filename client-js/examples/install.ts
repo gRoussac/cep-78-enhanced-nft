@@ -17,7 +17,6 @@ import {
   getDeploy,
   getAccountInfo,
   getAccountNamedKeyValue,
-  AccountInfo,
 } from "./common";
 
 const install = async () => {
